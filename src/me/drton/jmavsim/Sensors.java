@@ -17,4 +17,6 @@ public interface Sensors {
     Vector3d getMag();
 
     double getPressureAlt();
+
+    GPSPosition getGPS();
 }

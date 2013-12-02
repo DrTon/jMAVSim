@@ -2,6 +2,7 @@ package me.drton.jmavsim;
 
 import com.sun.j3d.loaders.Scene;
 import com.sun.j3d.loaders.objectfile.ObjectFile;
+import com.sun.j3d.utils.geometry.Sphere;
 import com.sun.j3d.utils.image.TextureLoader;
 import com.sun.j3d.utils.universe.SimpleUniverse;
 import me.drton.jmavsim.vehicle.Vehicle;
@@ -42,9 +43,25 @@ public class Visualizer {
     private void createEnvironment() {
         BranchGroup group = new BranchGroup();
         // Sky
-        Background background = new Background(new Color3f(0.7f, 0.7f, 1.0f));
-        background.setApplicationBounds(sceneBounds);
-        group.addChild(background);
+        BoundingSphere bounds = new BoundingSphere(new Point3d(0.0, 0.0, 0.0), 100.0);
+        Background bg = new Background();
+        bg.setApplicationBounds(bounds);
+        BranchGroup backGeoBranch = new BranchGroup();
+        Sphere skySphere = new Sphere(1.0f, Sphere.GENERATE_NORMALS | Sphere.GENERATE_NORMALS_INWARD | Sphere.GENERATE_TEXTURE_COORDS, 32);
+        //        Sphere.GENERATE_NORMALS | Sphere.GENERATE_NORMALS_INWARD | Sphere.GENERATE_TEXTURE_COORDS, 32);
+        Texture texSky = new TextureLoader("environment/sky.jpg", null).getTexture();
+        skySphere.getAppearance().setTexture(texSky);
+        Transform3D transformSky = new Transform3D();
+        //transformSky.setTranslation(new Vector3d(0.0, 0.0, -0.5));
+        Matrix3d rot = new Matrix3d();
+        rot.rotX(Math.PI/2);
+        transformSky.setRotation(rot);
+        TransformGroup tgSky = new TransformGroup(transformSky);
+        tgSky.addChild(skySphere);
+        backGeoBranch.addChild(tgSky);
+        bg.setGeometry(backGeoBranch);
+        group.addChild(bg);
+        //group.addChild(tgSky);
         // Ground
         QuadArray polygon1 = new QuadArray(4, QuadArray.COORDINATES | GeometryArray.TEXTURE_COORDINATE_2);
         polygon1.setCoordinate(0, new Point3f(-100f, 100f, 0f));
@@ -55,16 +72,16 @@ public class Visualizer {
         polygon1.setTextureCoordinate(0, 1, new TexCoord2f(10.0f, 0.0f));
         polygon1.setTextureCoordinate(0, 2, new TexCoord2f(10.0f, 10.0f));
         polygon1.setTextureCoordinate(0, 3, new TexCoord2f(0.0f, 10.0f));
-        Texture texImage = new TextureLoader("environment/grass2.jpg", null).getTexture();
-        Appearance polygon1Appearance = new Appearance();
-        polygon1Appearance.setTexture(texImage);
-        Shape3D ground = new Shape3D(polygon1, polygon1Appearance);
-        Transform3D transform = new Transform3D();
-        transform.setTranslation(
+        Texture texGround = new TextureLoader("environment/grass2.jpg", null).getTexture();
+        Appearance apGround = new Appearance();
+        apGround.setTexture(texGround);
+        Shape3D ground = new Shape3D(polygon1, apGround);
+        Transform3D transformGround = new Transform3D();
+        transformGround.setTranslation(
                 new Vector3d(0.0, 0.0, 0.005 + environment.getGroundLevel(new Vector3d(0.0, 0.0, 0.0))));
-        TransformGroup tg = new TransformGroup(transform);
-        tg.addChild(ground);
-        group.addChild(tg);
+        TransformGroup tgGround = new TransformGroup(transformGround);
+        tgGround.addChild(ground);
+        group.addChild(tgGround);
         // Light
         DirectionalLight light1 = new DirectionalLight(white, new Vector3f(4.0f, 7.0f, 12.0f));
         light1.setInfluencingBounds(sceneBounds);

@@ -11,6 +11,11 @@ import javax.vecmath.Vector3d;
 public class SimpleSensors implements Sensors {
     private Vehicle vehicle;
     private Vector3d magField = new Vector3d(0.2, 0.0, -0.8);
+    private GlobalPositionProjector gpsProjector = new GlobalPositionProjector();
+
+    public void initGPS(double lat, double lon) {
+        gpsProjector.init(lat, lon);
+    }
 
     @Override
     public void setVehicle(Vehicle vehicle) {
@@ -44,5 +49,20 @@ public class SimpleSensors implements Sensors {
     @Override
     public double getPressureAlt() {
         return -vehicle.getPosition().z;
+    }
+
+    @Override
+    public GPSPosition getGPS() {
+        double[] latlon = gpsProjector.reproject(vehicle.getPosition().x, vehicle.getPosition().y);
+        GPSPosition gps = new GPSPosition();
+        gps.lat = latlon[0];
+        gps.lon = latlon[1];
+        gps.alt = -vehicle.getPosition().z;
+        gps.eph = 1.0;
+        gps.epv = 1.0;
+        gps.vn = vehicle.getVelocity().x;
+        gps.ve = vehicle.getVelocity().y;
+        gps.vd = vehicle.getVelocity().z;
+        return gps;
     }
 }

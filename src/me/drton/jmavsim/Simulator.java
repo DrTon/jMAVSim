@@ -19,11 +19,18 @@ public class Simulator {
     private Visualizer visualizer;
     private MAVLinkPort mavlinkPort;
     private boolean gotHeartBeat = false;
+    private boolean inited = false;
     private int sysId = -1;
     private int componentId = -1;
-    private int sleepInterval = 5;
+    private int sleepInterval = 10;
+    private long msgIntervalSensor = 10;
+    private long msgLastSensor = 0;
+    private long msgIntervalGPS = 200;
+    private long msgLastGPS = 0;
+    private long initTime = 0;
+    private long initDelay = 1000;
 
-    public Simulator() throws IOException {
+    public Simulator() throws IOException, InterruptedException {
         // Create environment
         environment = new SimpleEnvironment();
         // Create vehicle with sensors
@@ -33,7 +40,9 @@ public class Simulator {
         I.rotZ(0.0);
         I.setScale(0.01);
         v.setMomentOfInertia(I);
-        v.setSensors(new SimpleSensors());
+        SimpleSensors sensors = new SimpleSensors();
+        sensors.initGPS(55.753395, 37.625427);
+        v.setSensors(sensors);
         v.setDragMove(0.1);
         //v.setDragRotate(0.1);
         vehicle = v;
@@ -42,8 +51,10 @@ public class Simulator {
         visualizer.setVehicle(vehicle, "models/3dr_arducopter_quad_x.obj");
         // Create and open port
         gotHeartBeat = false;
-        mavlinkPort = new MAVLinkPort();
-        mavlinkPort.open("/dev/tty.usbmodem1", 230400, 8, 1, 0);
+        inited = false;
+        SerialMAVLinkPort serialMAVLinkPort = new SerialMAVLinkPort();
+        serialMAVLinkPort.open("/dev/tty.usbmodem1", 230400, 8, 1, 0);
+        mavlinkPort = serialMAVLinkPort;
         // Run
         try {
             run();
@@ -63,6 +74,7 @@ public class Simulator {
 
     private void handleMavLinkMessage(MAVLinkMessage msg) throws IOException {
         //System.out.println("MSG: " + msg);
+        long t = System.currentTimeMillis();
         if (msg instanceof msg_hil_controls) {
             msg_hil_controls msg_hil = (msg_hil_controls) msg;
             double[] control = new double[]{
@@ -74,7 +86,12 @@ public class Simulator {
                 sysId = msg_heartbeat.sysId;
                 componentId = msg_heartbeat.componentId;
                 gotHeartBeat = true;
+                initTime = t + initDelay;
+            }
+            if (!inited && t > initTime) {
+                System.out.println("Init MAVLink");
                 initMavLink();
+                inited = true;
             }
         } else if (msg instanceof msg_statustext) {
             System.out.println("MSG: " + ((msg_statustext) msg).getText());
@@ -85,24 +102,46 @@ public class Simulator {
     }
 
     private void sendMavLinkMessages() throws IOException {
-        // Sensors
-        msg_hil_sensor msg_sensor = new msg_hil_sensor(sysId, componentId);
-        msg_sensor.time_usec = System.currentTimeMillis() * 1000;
+        long t = System.currentTimeMillis();
+        long tu = t * 1000;
         Sensors sensors = vehicle.getSensors();
-        Vector3d acc = sensors.getAcc();
-        msg_sensor.xacc = (float) acc.x;
-        msg_sensor.yacc = (float) acc.y;
-        msg_sensor.zacc = (float) acc.z;
-        Vector3d gyro = sensors.getGyro();
-        msg_sensor.xgyro = (float) gyro.x;
-        msg_sensor.ygyro = (float) gyro.y;
-        msg_sensor.zgyro = (float) gyro.z;
-        Vector3d mag = sensors.getMag();
-        msg_sensor.xmag = (float) mag.x;
-        msg_sensor.ymag = (float) mag.y;
-        msg_sensor.zmag = (float) mag.z;
-        msg_sensor.pressure_alt = (float) sensors.getPressureAlt();
-        mavlinkPort.sendMessage(msg_sensor);
+        // Sensors
+        if (t - msgLastSensor > msgIntervalSensor) {
+            msgLastSensor = t;
+            msg_hil_sensor msg_sensor = new msg_hil_sensor(sysId, componentId);
+            msg_sensor.time_usec = tu;
+            Vector3d acc = sensors.getAcc();
+            msg_sensor.xacc = (float) acc.x;
+            msg_sensor.yacc = (float) acc.y;
+            msg_sensor.zacc = (float) acc.z;
+            Vector3d gyro = sensors.getGyro();
+            msg_sensor.xgyro = (float) gyro.x;
+            msg_sensor.ygyro = (float) gyro.y;
+            msg_sensor.zgyro = (float) gyro.z;
+            Vector3d mag = sensors.getMag();
+            msg_sensor.xmag = (float) mag.x;
+            msg_sensor.ymag = (float) mag.y;
+            msg_sensor.zmag = (float) mag.z;
+            msg_sensor.pressure_alt = (float) sensors.getPressureAlt();
+            mavlinkPort.sendMessage(msg_sensor);
+        }
+        // GPS
+        if (t - msgLastGPS > msgIntervalGPS) {
+            msgLastGPS = t;
+            msg_hil_gps msg_gps = new msg_hil_gps(sysId, componentId);
+            msg_gps.time_usec = tu;
+            GPSPosition gps = sensors.getGPS();
+            msg_gps.lat = (long) (gps.lat * 1e7);
+            msg_gps.lon = (long) (gps.lon * 1e7);
+            msg_gps.alt = (long) (gps.alt * 1e3);
+            msg_gps.eph = (int) (gps.eph * 100);
+            msg_gps.epv = (int) (gps.epv * 100);
+            msg_gps.vel = (int) (gps.getSpeed() * 100);
+            msg_gps.cog = (int) (gps.getCog() / Math.PI * 18000.0);
+            msg_gps.fix_type = 3;
+            msg_gps.satellites_visible = 10;
+            mavlinkPort.sendMessage(msg_gps);
+        }
     }
 
     public void run() throws IOException, InterruptedException {
@@ -116,7 +155,7 @@ public class Simulator {
             long t = System.currentTimeMillis();
             vehicle.update(t);
             visualizer.update(t);
-            if (mavlinkPort.isOpened() && gotHeartBeat)
+            if (mavlinkPort.isOpened() && inited)
                 sendMavLinkMessages();
             Thread.sleep(sleepInterval);
         }
