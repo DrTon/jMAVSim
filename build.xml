@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="jMAVSim" default="all">
+    <path id="libsclasspath">
+        <fileset dir="lib">
+            <include name="*.jar"/>
+        </fileset>
+    </path>
+
+    <target name="all" description="Do the entire build" depends="jmavsim"/>
+
+    <target name="make_dirs" description="Make dirs">
+        <mkdir dir="out/production/jMAVSim"/>
+    </target>
+
+    <path id="javac.class.path">
+        <pathelement location="lib/annotations.jar"/>
+    </path>
+
+    <target name="compile" description="Compile java sources" depends="make_dirs">
+        <javac destdir="out/production/jMAVSim" includeantruntime="false" debug="true">
+            <classpath refid="libsclasspath"/>
+            <src path="src"/>
+        </javac>
+    </target>
+
+    <target name="jmavsim" description="Link classes and JARs for jMAVSim" depends="compile">
+        <jar id="jmavsim" jarfile="out/production/jmavsim.jar">
+            <manifest>
+                <attribute name="Main-Class" value="me.drton.jmavsim.Simulator"/>
+            </manifest>
+            <fileset dir="out/production/jMAVSim">
+                <include name="**/*.class"/>
+            </fileset>
+            <zipfileset includes="**/*.class" src="lib/j3dcore.jar" />
+            <zipfileset includes="**/*.class" src="lib/j3dutils.jar"/>
+            <zipfileset includes="**/*.class" src="lib/vecmath.jar"/>
+            <zipfileset includes="**/*.class" src="lib/jssc.jar"/>
+            <zipfileset includes="**/*.class" src="lib/org.mavlink.library-1.0.0.jar"/>
+            <zipfileset includes="**/*.class" src="lib/org.mavlink.util-1.0.0.jar"/>
+        </jar>
+    </target>
+
+    <taskdef name="jarbundler" classpath="lib/jarbundler-2.2.0.jar" classname="net.sourceforge.jarbundler.JarBundler"/>
+    <target name="jmavsim_mac_os_app" description="Build jMAVSim Mac OS X app" depends="jmavsim">
+        <jarbundler dir="out/production" name="jMAVSim" mainclass="me.drton.jmavsim.Simulator"
+                    jar="out/production/jmavsim.jar" version="0.0.1"/>
+    </target>
+
+    <target name="clean" description="Clean up">
+        <delete dir="out/production"/>
+    </target>
+</project>

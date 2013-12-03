@@ -9,6 +9,7 @@ import org.mavlink.messages.common.*;
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Vector3d;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 
 /**
  * User: ton Date: 26.11.13 Time: 12:33
@@ -18,6 +19,7 @@ public class Simulator {
     private Vehicle vehicle;
     private Visualizer visualizer;
     private MAVLinkPort mavlinkPort;
+    private MAVLinkPort mavlinkPort1;
     private boolean gotHeartBeat = false;
     private boolean inited = false;
     private int sysId = -1;
@@ -54,7 +56,10 @@ public class Simulator {
         inited = false;
         SerialMAVLinkPort serialMAVLinkPort = new SerialMAVLinkPort();
         serialMAVLinkPort.open("/dev/tty.usbmodem1", 230400, 8, 1, 0);
+        UDPMavLinkPort udpMavLinkPort = new UDPMavLinkPort();
+        udpMavLinkPort.open(new InetSocketAddress(14555));
         mavlinkPort = serialMAVLinkPort;
+        mavlinkPort1 = udpMavLinkPort;
         // Run
         try {
             run();
@@ -95,9 +100,6 @@ public class Simulator {
             }
         } else if (msg instanceof msg_statustext) {
             System.out.println("MSG: " + ((msg_statustext) msg).getText());
-        } else if (msg instanceof msg_local_position_ned) {
-            msg_local_position_ned lpos = (msg_local_position_ned) msg;
-            System.out.println("LPOS: " + lpos);
         }
     }
 
@@ -151,6 +153,13 @@ public class Simulator {
                 if (msg == null)
                     break;
                 handleMavLinkMessage(msg);
+                mavlinkPort1.sendMessage(msg);
+            }
+            while (mavlinkPort1.hasNextMessage()) {
+                MAVLinkMessage msg = mavlinkPort1.getNextMessage();
+                if (msg == null)
+                    break;
+                mavlinkPort.sendMessage(msg);
             }
             long t = System.currentTimeMillis();
             vehicle.update(t);

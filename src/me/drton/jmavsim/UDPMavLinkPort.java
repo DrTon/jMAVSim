@@ -88,7 +88,7 @@ public class UDPMavLinkPort implements MAVLinkPort {
 
     @Override
     public void sendMessage(MAVLinkMessage msg) throws IOException {
-        if (isOpened()) {
+        if (isOpened() && sendAddress != null) {
             txBuffer.clear();
             txBuffer.put(msg.encode());
             txBuffer.flip();
