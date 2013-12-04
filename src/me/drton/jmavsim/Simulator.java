@@ -24,7 +24,7 @@ public class Simulator {
     private boolean inited = false;
     private int sysId = -1;
     private int componentId = -1;
-    private int sleepInterval = 10;
+    private int sleepInterval = 5;
     private long msgIntervalSensor = 10;
     private long msgLastSensor = 0;
     private long msgIntervalGPS = 200;
@@ -34,13 +34,17 @@ public class Simulator {
 
     public Simulator() throws IOException, InterruptedException {
         // Create environment
-        environment = new SimpleEnvironment();
+        SimpleEnvironment simpleEnvironment = new SimpleEnvironment();
+        simpleEnvironment.setMagField(new Vector3d(0.2f, 0.0f, 0.5f));
+        environment = simpleEnvironment;
         // Create vehicle with sensors
-        AbstractMultirotor v = new Quadrotor(environment, "x", 0.55 / 2, 5.0, 1.0);
-        v.setMass(1.0);
+        AbstractMultirotor v = new Quadrotor(environment, "x", 0.55 / 2, 6.0, 0.18);
+        v.setMass(1.2);
         Matrix3d I = new Matrix3d();
-        I.rotZ(0.0);
-        I.setScale(0.01);
+        // Moments of inertia
+        I.m00 = 0.01;  // X
+        I.m11 = 0.01;  // Y
+        I.m22 = 0.018;  // Z
         v.setMomentOfInertia(I);
         SimpleSensors sensors = new SimpleSensors();
         sensors.initGPS(55.753395, 37.625427);
