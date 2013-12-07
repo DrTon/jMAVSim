@@ -10,7 +10,6 @@ import javax.vecmath.Vector3d;
  */
 public class SimpleSensors implements Sensors {
     private Vehicle vehicle;
-    private Vector3d magField = new Vector3d(0.2, 0.0, -0.8);
     private GlobalPositionProjector gpsProjector = new GlobalPositionProjector();
 
     public void initGPS(double lat, double lon) {
@@ -39,7 +38,7 @@ public class SimpleSensors implements Sensors {
 
     @Override
     public Vector3d getMag() {
-        Vector3d mag = new Vector3d(magField);
+        Vector3d mag = new Vector3d(vehicle.getEnvironment().getMagField(vehicle.getPosition()));
         Matrix3d rot = new Matrix3d(vehicle.getRotation());
         rot.transpose();
         rot.transform(mag);
