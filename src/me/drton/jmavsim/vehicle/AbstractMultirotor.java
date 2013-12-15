@@ -1,6 +1,7 @@
 package me.drton.jmavsim.vehicle;
 
 import me.drton.jmavsim.Environment;
+import me.drton.jmavsim.Rotor;
 
 import javax.vecmath.Vector3d;
 
@@ -10,10 +11,22 @@ import javax.vecmath.Vector3d;
 public abstract class AbstractMultirotor extends AbstractVehicle {
     private double dragMove = 0.0;
     private double dragRotate = 0.0;
+    protected Rotor[] rotors;
 
     public AbstractMultirotor(Environment environment) {
         super(environment);
-        control = initControl();
+        rotors = new Rotor[getRotorsNum()];
+        for (int i = 0; i < getRotorsNum(); i++) {
+            rotors[i] = new Rotor();
+        }
+    }
+
+    @Override
+    protected double[] initControl() {
+        double[] ctl = new double[getRotorsNum()];
+        for (int i = 0; i < getRotorsNum(); i++)
+            ctl[i] = 0.0;
+        return ctl;
     }
 
     /**
@@ -29,23 +42,7 @@ public abstract class AbstractMultirotor extends AbstractVehicle {
      * @param i rotor number
      * @return rotor radius-vector from GC
      */
-    protected abstract Vector3d getRotor(int i);
-
-    /**
-     * Get rotor thrust at full throttle.
-     *
-     * @param i rotor number
-     * @return thrust in newtons
-     */
-    protected abstract double getRotorThrust(int i);
-
-    /**
-     * Get rotor torque at full throttle
-     *
-     * @param i rotor number
-     * @return rotor torque, positive for CW and negative for CCW rotating propellers (top view)
-     */
-    protected abstract double getRotorTorque(int i);
+    protected abstract Vector3d getRotorPosition(int i);
 
     public void setDragMove(double dragMove) {
         this.dragMove = dragMove;
@@ -56,11 +53,22 @@ public abstract class AbstractMultirotor extends AbstractVehicle {
     }
 
     @Override
+    public void update(long t) {
+        for (Rotor rotor : rotors) {
+            rotor.update(t);
+        }
+        super.update(t);
+        for (int i = 0; i < rotors.length; i++) {
+            rotors[i].setControl(control[i]);
+        }
+    }
+
+    @Override
     protected Vector3d getForce() {
         int n = getRotorsNum();
         Vector3d f = new Vector3d();
         for (int i = 0; i < n; i++) {
-            f.z -= control[i] * getRotorThrust(i);
+            f.z -= rotors[i].getThrust();
         }
         rotation.transform(f);
         Vector3d airSpeed = new Vector3d(getVelocity());
@@ -78,10 +86,10 @@ public abstract class AbstractMultirotor extends AbstractVehicle {
         Vector3d t = new Vector3d();
         for (int i = 0; i < n; i++) {
             // Roll / pitch
-            t.z = -control[i] * getRotorThrust(i);
-            m.cross(getRotor(i), t);
+            t.z = -rotors[i].getThrust();
+            m.cross(getRotorPosition(i), t);
             // Yaw
-            m.z -= control[i] * getRotorTorque(i);
+            m.z -= rotors[i].getTorque();
             torque.add(m);
         }
         Vector3d airRotationRate = new Vector3d(rotationRate);

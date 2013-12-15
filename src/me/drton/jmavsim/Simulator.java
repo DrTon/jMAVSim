@@ -38,7 +38,7 @@ public class Simulator {
         simpleEnvironment.setMagField(new Vector3d(0.2f, 0.0f, 0.5f));
         environment = simpleEnvironment;
         // Create vehicle with sensors
-        AbstractMultirotor v = new Quadrotor(environment, "x", 0.55 / 2, 6.0, 0.18);
+        AbstractMultirotor v = new Quadrotor(environment, "x", 0.55 / 2, 6.0, 0.18, 0.006);
         v.setMass(1.2);
         Matrix3d I = new Matrix3d();
         // Moments of inertia
@@ -49,7 +49,7 @@ public class Simulator {
         SimpleSensors sensors = new SimpleSensors();
         sensors.initGPS(55.753395, 37.625427);
         v.setSensors(sensors);
-        v.setDragMove(0.1);
+        v.setDragMove(0.02);
         //v.setDragRotate(0.1);
         vehicle = v;
         // Create visualizer
@@ -90,8 +90,8 @@ public class Simulator {
                     msg_hil.roll_ailerons, msg_hil.pitch_elevator, msg_hil.yaw_rudder, msg_hil.throttle};
             vehicle.setControl(control);
         } else if (msg instanceof msg_heartbeat) {
+            msg_heartbeat msg_heartbeat = (msg_heartbeat) msg;
             if (!gotHeartBeat) {
-                msg_heartbeat msg_heartbeat = (msg_heartbeat) msg;
                 sysId = msg_heartbeat.sysId;
                 componentId = msg_heartbeat.componentId;
                 gotHeartBeat = true;
@@ -101,6 +101,10 @@ public class Simulator {
                 System.out.println("Init MAVLink");
                 initMavLink();
                 inited = true;
+            }
+            if ((msg_heartbeat.base_mode & 128) == 0) {
+                double[] control = new double[]{0.0, 0.0, 0.0, 0.0};
+                vehicle.setControl(control);
             }
         } else if (msg instanceof msg_statustext) {
             System.out.println("MSG: " + ((msg_statustext) msg).getText());
