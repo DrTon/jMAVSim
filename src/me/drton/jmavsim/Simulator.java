@@ -39,7 +39,7 @@ public class Simulator {
         simpleEnvironment.setWind(new Vector3d(0.0, 5.0, 0.0));
         environment = simpleEnvironment;
         // Create vehicle with sensors
-        AbstractMultirotor v = new Quadrotor(environment, "x", 0.55 / 2, 6.0, 0.18, 0.006);
+        AbstractMultirotor v = new Quadrotor(environment, "x", 0.55 / 2, 6.0, 0.18, 0.003);
         v.setMass(1.2);
         Matrix3d I = new Matrix3d();
         // Moments of inertia
