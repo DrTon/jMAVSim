@@ -65,6 +65,7 @@ public abstract class AbstractVehicle implements Vehicle {
 
     @Override
     public void update(long t) {
+        environment.update(t);
         if (lastTime >= 0) {
             double dt = (t - lastTime) / 1000.0;
             // Position

@@ -36,6 +36,7 @@ public class Simulator {
         // Create environment
         SimpleEnvironment simpleEnvironment = new SimpleEnvironment();
         simpleEnvironment.setMagField(new Vector3d(0.2f, 0.0f, 0.5f));
+        simpleEnvironment.setWind(new Vector3d(0.0, 5.0, 0.0));
         environment = simpleEnvironment;
         // Create vehicle with sensors
         AbstractMultirotor v = new Quadrotor(environment, "x", 0.55 / 2, 6.0, 0.18, 0.006);

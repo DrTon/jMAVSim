@@ -13,4 +13,6 @@ public interface Environment {
     Vector3d getWind(Vector3d point);
 
     double getGroundLevel(Vector3d point);
+
+    void update(long t);
 }
