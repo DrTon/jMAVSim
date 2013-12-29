@@ -145,6 +145,9 @@ public class Simulator {
             msg_gps.lat = (long) (gps.lat * 1e7);
             msg_gps.lon = (long) (gps.lon * 1e7);
             msg_gps.alt = (long) (gps.alt * 1e3);
+            msg_gps.vn = (int) (gps.vn * 100);
+            msg_gps.ve = (int) (gps.ve * 100);
+            msg_gps.vd = (int) (gps.vd * 100);
             msg_gps.eph = (int) (gps.eph * 100);
             msg_gps.epv = (int) (gps.epv * 100);
             msg_gps.vel = (int) (gps.getSpeed() * 100);
