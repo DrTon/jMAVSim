@@ -1,7 +1,7 @@
 package me.drton.jmavsim;
 
-import me.drton.jmavsim.vehicle.AbstractMultirotor;
-import me.drton.jmavsim.vehicle.Quadrotor;
+import me.drton.jmavsim.vehicle.AbstractMulticopter;
+import me.drton.jmavsim.vehicle.Quadcopter;
 import me.drton.jmavsim.vehicle.Vehicle;
 import org.mavlink.messages.MAVLinkMessage;
 import org.mavlink.messages.common.*;
@@ -24,9 +24,8 @@ public class Simulator {
     private boolean inited = false;
     private int sysId = -1;
     private int componentId = -1;
-    private int sleepInterval = 5;
-    private long msgIntervalSensor = 10;
-    private long msgLastSensor = 0;
+    private int sleepInterval = 8;
+    private long nextRun = 0;
     private long msgIntervalGPS = 200;
     private long msgLastGPS = 0;
     private long initTime = 0;
@@ -36,16 +35,18 @@ public class Simulator {
         // Create environment
         SimpleEnvironment simpleEnvironment = new SimpleEnvironment();
         simpleEnvironment.setMagField(new Vector3d(0.2f, 0.0f, 0.5f));
-        simpleEnvironment.setWind(new Vector3d(0.0, 5.0, 0.0));
+        //simpleEnvironment.setWind(new Vector3d(0.0, 5.0, 0.0));
+        simpleEnvironment.setGroundLevel(0.0f);
         environment = simpleEnvironment;
         // Create vehicle with sensors
-        AbstractMultirotor v = new Quadrotor(environment, "x", 0.55 / 2, 6.0, 0.18, 0.003);
-        v.setMass(1.2);
+        Vector3d gc = new Vector3d(0.0, 0.0, 0.0);  // gravity center
+        AbstractMulticopter v = new Quadcopter(environment, "x", 0.33 / 2, 4.0, 0.05, 0.005, gc);
+        v.setMass(0.8);
         Matrix3d I = new Matrix3d();
         // Moments of inertia
-        I.m00 = 0.01;  // X
-        I.m11 = 0.01;  // Y
-        I.m22 = 0.018;  // Z
+        I.m00 = 0.005;  // X
+        I.m11 = 0.005;  // Y
+        I.m22 = 0.009;  // Z
         v.setMomentOfInertia(I);
         SimpleSensors sensors = new SimpleSensors();
         sensors.initGPS(55.753395, 37.625427);
@@ -83,12 +84,12 @@ public class Simulator {
     }
 
     private void handleMavLinkMessage(MAVLinkMessage msg) throws IOException {
-        //System.out.println("MSG: " + msg);
         long t = System.currentTimeMillis();
         if (msg instanceof msg_hil_controls) {
             msg_hil_controls msg_hil = (msg_hil_controls) msg;
             double[] control = new double[]{
-                    msg_hil.roll_ailerons, msg_hil.pitch_elevator, msg_hil.yaw_rudder, msg_hil.throttle};
+                    msg_hil.roll_ailerons, msg_hil.pitch_elevator, msg_hil.yaw_rudder, msg_hil.throttle, msg_hil.aux1,
+                    msg_hil.aux2, msg_hil.aux3, msg_hil.aux4};
             vehicle.setControl(control);
         } else if (msg instanceof msg_heartbeat) {
             msg_heartbeat msg_heartbeat = (msg_heartbeat) msg;
@@ -104,7 +105,7 @@ public class Simulator {
                 inited = true;
             }
             if ((msg_heartbeat.base_mode & 128) == 0) {
-                double[] control = new double[]{0.0, 0.0, 0.0, 0.0};
+                double[] control = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
                 vehicle.setControl(control);
             }
         } else if (msg instanceof msg_statustext) {
@@ -117,25 +118,22 @@ public class Simulator {
         long tu = t * 1000;
         Sensors sensors = vehicle.getSensors();
         // Sensors
-        if (t - msgLastSensor > msgIntervalSensor) {
-            msgLastSensor = t;
-            msg_hil_sensor msg_sensor = new msg_hil_sensor(sysId, componentId);
-            msg_sensor.time_usec = tu;
-            Vector3d acc = sensors.getAcc();
-            msg_sensor.xacc = (float) acc.x;
-            msg_sensor.yacc = (float) acc.y;
-            msg_sensor.zacc = (float) acc.z;
-            Vector3d gyro = sensors.getGyro();
-            msg_sensor.xgyro = (float) gyro.x;
-            msg_sensor.ygyro = (float) gyro.y;
-            msg_sensor.zgyro = (float) gyro.z;
-            Vector3d mag = sensors.getMag();
-            msg_sensor.xmag = (float) mag.x;
-            msg_sensor.ymag = (float) mag.y;
-            msg_sensor.zmag = (float) mag.z;
-            msg_sensor.pressure_alt = (float) sensors.getPressureAlt();
-            mavlinkPort.sendMessage(msg_sensor);
-        }
+        msg_hil_sensor msg_sensor = new msg_hil_sensor(sysId, componentId);
+        msg_sensor.time_usec = tu;
+        Vector3d acc = sensors.getAcc();
+        msg_sensor.xacc = (float) acc.x;
+        msg_sensor.yacc = (float) acc.y;
+        msg_sensor.zacc = (float) acc.z;
+        Vector3d gyro = sensors.getGyro();
+        msg_sensor.xgyro = (float) gyro.x;
+        msg_sensor.ygyro = (float) gyro.y;
+        msg_sensor.zgyro = (float) gyro.z;
+        Vector3d mag = sensors.getMag();
+        msg_sensor.xmag = (float) mag.x;
+        msg_sensor.ymag = (float) mag.y;
+        msg_sensor.zmag = (float) mag.z;
+        msg_sensor.pressure_alt = (float) sensors.getPressureAlt();
+        mavlinkPort.sendMessage(msg_sensor);
         // GPS
         if (t - msgLastGPS > msgIntervalGPS) {
             msgLastGPS = t;
@@ -159,15 +157,16 @@ public class Simulator {
     }
 
     public void run() throws IOException, InterruptedException {
+        nextRun = System.currentTimeMillis() + sleepInterval;
         while (true) {
-            while (mavlinkPort.hasNextMessage()) {
+            while (System.currentTimeMillis() < nextRun - sleepInterval * 3 / 4) {
                 MAVLinkMessage msg = mavlinkPort.getNextMessage();
                 if (msg == null)
                     break;
                 handleMavLinkMessage(msg);
                 mavlinkPort1.sendMessage(msg);
             }
-            while (mavlinkPort1.hasNextMessage()) {
+            while (System.currentTimeMillis() < nextRun - sleepInterval * 3 / 4) {
                 MAVLinkMessage msg = mavlinkPort1.getNextMessage();
                 if (msg == null)
                     break;
@@ -178,7 +177,9 @@ public class Simulator {
             visualizer.update(t);
             if (mavlinkPort.isOpened() && inited)
                 sendMavLinkMessages();
-            Thread.sleep(sleepInterval);
+            long timeLeft = Math.max(sleepInterval / 4, nextRun - System.currentTimeMillis());
+            nextRun = Math.max(t + sleepInterval / 4, nextRun + sleepInterval);
+            Thread.sleep(timeLeft);
         }
     }
 

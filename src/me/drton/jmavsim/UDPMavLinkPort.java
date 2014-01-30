@@ -32,24 +32,34 @@ public class UDPMavLinkPort implements MAVLinkPort {
         DataInputStream inputStream = new DataInputStream(new InputStream() {
             @Override
             public int read() throws IOException {
-                if (rxBuffer.remaining() > 0) {
-                    return rxBuffer.get() & 0xFF;
+                if (rxBuffer.remaining() == 0) {
+                    // Receive new packet
+                    fillBuffer();
                 }
-                // Receive new packet
-                rxBuffer.compact();
-                channel.configureBlocking(true);
-                SocketAddress addr = channel.receive(rxBuffer);
-                if (addr != null)
-                    sendAddress = addr;
-                rxBuffer.flip();
                 if (rxBuffer.remaining() > 0) {
                     return rxBuffer.get() & 0xFF;
                 } else {
                     return -1;
                 }
             }
+
+            @Override
+            public int available() throws IOException {
+                if (rxBuffer.remaining() == 0)
+                    fillBuffer();
+                return rxBuffer.remaining();
+            }
         });
         reader = new MAVLinkReader(inputStream, IMAVLinkMessage.MAVPROT_PACKET_START_V10);
+    }
+
+    private void fillBuffer() throws IOException {
+        // Receive new packet
+        rxBuffer.compact();
+        SocketAddress addr = channel.receive(rxBuffer);
+        if (addr != null)
+            sendAddress = addr;
+        rxBuffer.flip();
     }
 
     @Override
@@ -66,22 +76,15 @@ public class UDPMavLinkPort implements MAVLinkPort {
     public boolean hasNextMessage() throws IOException {
         if (!isOpened())
             return false;
-        if (rxBuffer.remaining() == 0) {
-            // Receive new packet
-            rxBuffer.compact();
-            channel.configureBlocking(false);
-            SocketAddress addr = channel.receive(rxBuffer);
-            if (addr != null)
-                sendAddress = addr;
-            rxBuffer.flip();
-        }
+        if (rxBuffer.remaining() == 0)
+            fillBuffer();
         return rxBuffer.remaining() > 0;
     }
 
     @Override
     public MAVLinkMessage getNextMessage() throws IOException {
         if (isOpened())
-            return reader.getNextMessage();
+            return reader.getNextMessageWithoutBlocking();
         else
             return null;
     }

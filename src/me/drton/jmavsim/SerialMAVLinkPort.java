@@ -35,6 +35,15 @@ public class SerialMAVLinkPort implements MAVLinkPort {
                     throw new IOException(e);
                 }
             }
+
+            @Override
+            public int available() throws IOException {
+                try {
+                    return serialPort.getInputBufferBytesCount();
+                } catch (SerialPortException e) {
+                    throw new IOException(e);
+                }
+            }
         });
         reader = new MAVLinkReader(inputStream, IMAVLinkMessage.MAVPROT_PACKET_START_V10);
     }
@@ -66,7 +75,7 @@ public class SerialMAVLinkPort implements MAVLinkPort {
     @Override
     public MAVLinkMessage getNextMessage() throws IOException {
         if (isOpened())
-            return reader.getNextMessage();
+            return reader.getNextMessageWithoutBlocking();
         else
             return null;
     }

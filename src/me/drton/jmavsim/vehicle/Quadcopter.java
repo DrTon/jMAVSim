@@ -9,12 +9,12 @@ import javax.vecmath.Vector3d;
 /**
  * User: ton Date: 26.11.13 Time: 16:00
  */
-public class Quadrotor extends AbstractMultirotor {
+public class Quadcopter extends AbstractMulticopter {
     private static final int rotorsNum = 4;
     private Vector3d[] rotorPositions = new Vector3d[rotorsNum];
 
-    public Quadrotor(Environment environment, String orientation, double armLength, double rotorThrust,
-                     double rotorTorque, double rotorTimeConst) {
+    public Quadcopter(Environment environment, String orientation, double armLength, double rotorThrust,
+                      double rotorTorque, double rotorTimeConst, Vector3d gcOffset) {
         super(environment);
         rotorPositions[0] = new Vector3d(0.0, armLength, 0.0);
         rotorPositions[1] = new Vector3d(0.0, -armLength, 0.0);
@@ -28,9 +28,10 @@ public class Quadrotor extends AbstractMultirotor {
             }
         } else if (orientation.equals("+")) {
         } else {
-            throw new RuntimeException("Unknown quadrotor orientation: " + orientation);
+            throw new RuntimeException("Unknown orientation: " + orientation);
         }
         for (int i = 0; i < rotors.length; i++) {
+            rotorPositions[i].sub(gcOffset);
             Rotor rotor = rotors[i];
             rotor.setFullThrust(rotorThrust);
             rotor.setFullTorque(i < 2 ? -rotorTorque : rotorTorque);

@@ -8,12 +8,12 @@ import javax.vecmath.Vector3d;
 /**
  * User: ton Date: 29.11.13 Time: 16:59
  */
-public abstract class AbstractMultirotor extends AbstractVehicle {
+public abstract class AbstractMulticopter extends AbstractVehicle {
     private double dragMove = 0.0;
     private double dragRotate = 0.0;
     protected Rotor[] rotors;
 
-    public AbstractMultirotor(Environment environment) {
+    public AbstractMulticopter(Environment environment) {
         super(environment);
         rotors = new Rotor[getRotorsNum()];
         for (int i = 0; i < getRotorsNum(); i++) {

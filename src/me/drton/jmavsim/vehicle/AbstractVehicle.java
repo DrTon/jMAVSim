@@ -30,6 +30,7 @@ public abstract class AbstractVehicle implements Vehicle {
         momentOfInertia.rotZ(0.0);
         momentOfInertiaInv.rotZ(0.0);
         control = initControl();
+        position.set(0.0, 0.0, environment.getGroundLevel(new Vector3d(0.0, 0.0, 0.0)));
     }
 
     @Override
@@ -82,7 +83,7 @@ public abstract class AbstractVehicle implements Vehicle {
                 acceleration.y = -velocity.y / dt;
                 acceleration.z = -velocity.z / dt;
                 position.z = environment.getGroundLevel(position);
-                rotationRate.set(0.0, 0.0, 0.0);
+                //rotationRate.set(0.0, 0.0, 0.0);
             }
             Vector3d dVel = new Vector3d(acceleration);
             dVel.scale(dt);
