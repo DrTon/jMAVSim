@@ -1,8 +1,8 @@
 package me.drton.jmavsim;
 
 import me.drton.jmavsim.vehicle.AbstractMulticopter;
+import me.drton.jmavsim.vehicle.AbstractVehicle;
 import me.drton.jmavsim.vehicle.Quadcopter;
-import me.drton.jmavsim.vehicle.Vehicle;
 import org.mavlink.messages.MAVLinkMessage;
 import org.mavlink.messages.common.*;
 
@@ -10,13 +10,16 @@ import javax.vecmath.Matrix3d;
 import javax.vecmath.Vector3d;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * User: ton Date: 26.11.13 Time: 12:33
  */
 public class Simulator {
-    private Environment environment;
-    private Vehicle vehicle;
+    private World world;
+    private AbstractVehicle vehicle;
     private Visualizer visualizer;
     private MAVLinkPort mavlinkPort;
     private MAVLinkPort mavlinkPort1;
@@ -32,15 +35,18 @@ public class Simulator {
     private long initDelay = 1000;
 
     public Simulator() throws IOException, InterruptedException {
+        // Create world
+        world = new World();
         // Create environment
-        SimpleEnvironment simpleEnvironment = new SimpleEnvironment();
+        SimpleEnvironment simpleEnvironment = new SimpleEnvironment(world);
         simpleEnvironment.setMagField(new Vector3d(0.2f, 0.0f, 0.5f));
         //simpleEnvironment.setWind(new Vector3d(0.0, 5.0, 0.0));
         simpleEnvironment.setGroundLevel(0.0f);
-        environment = simpleEnvironment;
+        world.addObject(simpleEnvironment);
         // Create vehicle with sensors
         Vector3d gc = new Vector3d(0.0, 0.0, 0.0);  // gravity center
-        AbstractMulticopter v = new Quadcopter(environment, "x", 0.33 / 2, 4.0, 0.05, 0.005, gc);
+        AbstractMulticopter v = new Quadcopter(world, "models/3dr_arducopter_quad_x.obj", "x", 0.33 / 2, 4.0, 0.05,
+                0.005, gc);
         v.setMass(0.8);
         Matrix3d I = new Matrix3d();
         // Moments of inertia
@@ -54,14 +60,15 @@ public class Simulator {
         v.setDragMove(0.02);
         //v.setDragRotate(0.1);
         vehicle = v;
+        world.addObject(v);
         // Create visualizer
-        visualizer = new Visualizer(environment);
-        visualizer.setVehicle(vehicle, "models/3dr_arducopter_quad_x.obj");
+        visualizer = new Visualizer(world);
+        visualizer.setViewerTarget(v);
         // Create and open port
         gotHeartBeat = false;
         inited = false;
         SerialMAVLinkPort serialMAVLinkPort = new SerialMAVLinkPort();
-        serialMAVLinkPort.open("/dev/tty.usbmodem1", 230400, 8, 1, 0);
+        //serialMAVLinkPort.open("/dev/tty.usbmodem1", 230400, 8, 1, 0);
         UDPMavLinkPort udpMavLinkPort = new UDPMavLinkPort();
         udpMavLinkPort.open(new InetSocketAddress(14555));
         mavlinkPort = serialMAVLinkPort;
@@ -87,9 +94,9 @@ public class Simulator {
         long t = System.currentTimeMillis();
         if (msg instanceof msg_hil_controls) {
             msg_hil_controls msg_hil = (msg_hil_controls) msg;
-            double[] control = new double[]{
-                    msg_hil.roll_ailerons, msg_hil.pitch_elevator, msg_hil.yaw_rudder, msg_hil.throttle, msg_hil.aux1,
-                    msg_hil.aux2, msg_hil.aux3, msg_hil.aux4};
+            List<Double> control = Arrays.asList((double) msg_hil.roll_ailerons, (double) msg_hil.pitch_elevator, (double) msg_hil.yaw_rudder,
+                    (double) msg_hil.throttle, (double) msg_hil.aux1, (double) msg_hil.aux2, (double) msg_hil.aux3,
+                    (double) msg_hil.aux4);
             vehicle.setControl(control);
         } else if (msg instanceof msg_heartbeat) {
             msg_heartbeat msg_heartbeat = (msg_heartbeat) msg;
@@ -105,8 +112,7 @@ public class Simulator {
                 inited = true;
             }
             if ((msg_heartbeat.base_mode & 128) == 0) {
-                double[] control = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-                vehicle.setControl(control);
+                vehicle.setControl(Collections.<Double>emptyList());
             }
         } else if (msg instanceof msg_statustext) {
             System.out.println("MSG: " + ((msg_statustext) msg).getText());

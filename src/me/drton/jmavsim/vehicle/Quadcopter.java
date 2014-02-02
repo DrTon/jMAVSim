@@ -1,10 +1,11 @@
 package me.drton.jmavsim.vehicle;
 
-import me.drton.jmavsim.Environment;
 import me.drton.jmavsim.Rotor;
+import me.drton.jmavsim.World;
 
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Vector3d;
+import java.io.FileNotFoundException;
 
 /**
  * User: ton Date: 26.11.13 Time: 16:00
@@ -13,9 +14,9 @@ public class Quadcopter extends AbstractMulticopter {
     private static final int rotorsNum = 4;
     private Vector3d[] rotorPositions = new Vector3d[rotorsNum];
 
-    public Quadcopter(Environment environment, String orientation, double armLength, double rotorThrust,
-                      double rotorTorque, double rotorTimeConst, Vector3d gcOffset) {
-        super(environment);
+    public Quadcopter(World world, String modelName, String orientation, double armLength, double rotorThrust,
+                      double rotorTorque, double rotorTimeConst, Vector3d gcOffset) throws FileNotFoundException {
+        super(world, modelName);
         rotorPositions[0] = new Vector3d(0.0, armLength, 0.0);
         rotorPositions[1] = new Vector3d(0.0, -armLength, 0.0);
         rotorPositions[2] = new Vector3d(armLength, 0.0, 0.0);

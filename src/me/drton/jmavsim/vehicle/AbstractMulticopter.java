@@ -1,9 +1,10 @@
 package me.drton.jmavsim.vehicle;
 
-import me.drton.jmavsim.Environment;
 import me.drton.jmavsim.Rotor;
+import me.drton.jmavsim.World;
 
 import javax.vecmath.Vector3d;
+import java.io.FileNotFoundException;
 
 /**
  * User: ton Date: 29.11.13 Time: 16:59
@@ -13,20 +14,12 @@ public abstract class AbstractMulticopter extends AbstractVehicle {
     private double dragRotate = 0.0;
     protected Rotor[] rotors;
 
-    public AbstractMulticopter(Environment environment) {
-        super(environment);
+    public AbstractMulticopter(World world, String modelName) throws FileNotFoundException {
+        super(world, modelName);
         rotors = new Rotor[getRotorsNum()];
         for (int i = 0; i < getRotorsNum(); i++) {
             rotors[i] = new Rotor();
         }
-    }
-
-    @Override
-    protected double[] initControl() {
-        double[] ctl = new double[getRotorsNum()];
-        for (int i = 0; i < getRotorsNum(); i++)
-            ctl[i] = 0.0;
-        return ctl;
     }
 
     /**
@@ -59,7 +52,8 @@ public abstract class AbstractMulticopter extends AbstractVehicle {
         }
         super.update(t);
         for (int i = 0; i < rotors.length; i++) {
-            rotors[i].setControl(control[i]);
+            double c = control.size() > i ? control.get(i) : 0.0;
+            rotors[i].setControl(c);
         }
     }
 
@@ -73,7 +67,7 @@ public abstract class AbstractMulticopter extends AbstractVehicle {
         rotation.transform(f);
         Vector3d airSpeed = new Vector3d(getVelocity());
         airSpeed.scale(-1.0);
-        airSpeed.add(environment.getWind(position));
+        airSpeed.add(getWorld().getEnvironment().getWind(position));
         f.add(getAirFlowForce(airSpeed));
         return f;
     }

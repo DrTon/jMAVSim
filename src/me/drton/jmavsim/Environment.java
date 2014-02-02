@@ -5,14 +5,16 @@ import javax.vecmath.Vector3d;
 /**
  * User: ton Date: 28.11.13 Time: 20:35
  */
-public interface Environment {
-    Vector3d getG();
+public abstract class Environment extends WorldObject {
+    public Environment(World world) {
+        super(world);
+    }
 
-    Vector3d getMagField(Vector3d point);
+    public abstract Vector3d getG();
 
-    Vector3d getWind(Vector3d point);
+    public abstract Vector3d getMagField(Vector3d point);
 
-    double getGroundLevel(Vector3d point);
+    public abstract Vector3d getWind(Vector3d point);
 
-    void update(long t);
+    public abstract double getGroundLevel(Vector3d point);
 }
