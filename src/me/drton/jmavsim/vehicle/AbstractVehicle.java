@@ -1,11 +1,8 @@
 package me.drton.jmavsim.vehicle;
 
-import me.drton.jmavsim.Environment;
 import me.drton.jmavsim.VisualObject;
 import me.drton.jmavsim.World;
 
-import javax.vecmath.AxisAngle4d;
-import javax.vecmath.Matrix3d;
 import javax.vecmath.Vector3d;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -25,6 +22,6 @@ public abstract class AbstractVehicle extends VisualObject {
     }
 
     public void setControl(List<Double> control) {
-        control = new ArrayList<Double>(control);
+        this.control = new ArrayList<Double>(control);
     }
 }

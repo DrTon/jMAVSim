@@ -8,7 +8,7 @@ import javax.vecmath.Vector3d;
  * User: ton Date: 02.02.14 Time: 12:01
  */
 public abstract class MechanicalObject extends WorldObject {
-    private long lastTime = -1;
+    protected long lastTime = -1;
     protected Vector3d position = new Vector3d();
     protected Vector3d velocity = new Vector3d();
     protected Vector3d acceleration = new Vector3d();

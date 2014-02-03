@@ -18,6 +18,8 @@ public class Visualizer {
     private Vector3d viewerPos = new Vector3d(-7.0, 0.0, -1.7);
     private Transform3D viewerTransform = new Transform3D();
     private VisualObject viewerTarget;
+    private MechanicalObject viewerPosition;
+    private boolean autoRotate = true;
 
     public Visualizer(World world) {
         this.world = world;
@@ -30,15 +32,22 @@ public class Visualizer {
         }
     }
 
+    public void setAutoRotate(boolean autoRotate) {
+        this.autoRotate = autoRotate;
+    }
+
     public void setViewerTarget(VisualObject object) {
         this.viewerTarget = object;
-        updateViewer();
+    }
+
+    public void setViewerPosition(MechanicalObject object) {
+        this.viewerPosition = object;
     }
 
     private void createEnvironment() {
         BranchGroup group = new BranchGroup();
         // Sky
-        BoundingSphere bounds = new BoundingSphere(new Point3d(0.0, 0.0, 0.0), 100.0);
+        BoundingSphere bounds = new BoundingSphere(new Point3d(0.0, 0.0, 0.0), 1000.0);
         Background bg = new Background();
         bg.setApplicationBounds(bounds);
         BranchGroup backGeoBranch = new BranchGroup();
@@ -60,10 +69,10 @@ public class Visualizer {
         //group.addChild(tgSky);
         // Ground
         QuadArray polygon1 = new QuadArray(4, QuadArray.COORDINATES | GeometryArray.TEXTURE_COORDINATE_2);
-        polygon1.setCoordinate(0, new Point3f(-100f, 100f, 0f));
-        polygon1.setCoordinate(1, new Point3f(100f, 100f, 0f));
-        polygon1.setCoordinate(2, new Point3f(100f, -100f, 0f));
-        polygon1.setCoordinate(3, new Point3f(-100f, -100f, 0f));
+        polygon1.setCoordinate(0, new Point3f(-1000f, 1000f, 0f));
+        polygon1.setCoordinate(1, new Point3f(1000f, 1000f, 0f));
+        polygon1.setCoordinate(2, new Point3f(1000f, -1000f, 0f));
+        polygon1.setCoordinate(3, new Point3f(-1000f, -1000f, 0f));
         polygon1.setTextureCoordinate(0, 0, new TexCoord2f(0.0f, 0.0f));
         polygon1.setTextureCoordinate(0, 1, new TexCoord2f(10.0f, 0.0f));
         polygon1.setTextureCoordinate(0, 2, new TexCoord2f(10.0f, 10.0f));
@@ -89,25 +98,37 @@ public class Visualizer {
     }
 
     private void updateViewer() {
-        if (viewerTarget != null) {
-            Vector3d pos = viewerTarget.getPosition();
-            Matrix3d mat = new Matrix3d();
-            Matrix3d m1 = new Matrix3d();
-            mat.rotZ(Math.PI);
-            Vector3d dist = new Vector3d();
-            dist.sub(pos, viewerPos);
-            m1.rotY(Math.PI / 2);
-            mat.mul(m1);
-            m1.rotZ(-Math.PI / 2);
-            mat.mul(m1);
-            m1.rotY(-Math.atan2(pos.y - viewerPos.y, pos.x - viewerPos.x));
-            mat.mul(m1);
-            m1.rotX(-Math.asin((pos.z - viewerPos.z) / dist.length()));
-            mat.mul(m1);
-            viewerTransform.setRotation(mat);
-            viewerTransform.setTranslation(viewerPos);
-            universe.getViewingPlatform().getViewPlatformTransform().setTransform(viewerTransform);
+        if (viewerPosition != null) {
+            viewerPos.set(viewerPosition.getPosition());
         }
+        Matrix3d mat = new Matrix3d();
+        mat.setIdentity();
+        Matrix3d m1 = new Matrix3d();
+        if (autoRotate) {
+            if (viewerTarget != null) {
+                Vector3d pos = viewerTarget.getPosition();
+                mat.rotZ(Math.PI);
+                Vector3d dist = new Vector3d();
+                dist.sub(pos, viewerPos);
+                m1.rotY(Math.PI / 2);
+                mat.mul(m1);
+                m1.rotZ(-Math.PI / 2);
+                mat.mul(m1);
+                m1.rotY(-Math.atan2(pos.y - viewerPos.y, pos.x - viewerPos.x));
+                mat.mul(m1);
+                m1.rotX(-Math.asin((pos.z - viewerPos.z) / dist.length()));
+                mat.mul(m1);
+            }
+        } else {
+            mat.mul(viewerPosition.getRotation());
+            m1.rotZ(Math.PI / 2);
+            mat.mul(m1);
+            m1.rotX(-Math.PI / 2);
+            mat.mul(m1);
+        }
+        viewerTransform.setRotation(mat);
+        viewerTransform.setTranslation(viewerPos);
+        universe.getViewingPlatform().getViewPlatformTransform().setTransform(viewerTransform);
     }
 
     public void update(long t) {

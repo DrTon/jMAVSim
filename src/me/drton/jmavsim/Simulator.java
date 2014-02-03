@@ -27,12 +27,13 @@ public class Simulator {
     private boolean inited = false;
     private int sysId = -1;
     private int componentId = -1;
-    private int sleepInterval = 8;
+    private int sleepInterval = 10;
     private long nextRun = 0;
     private long msgIntervalGPS = 200;
     private long msgLastGPS = 0;
     private long initTime = 0;
     private long initDelay = 1000;
+    private Target target;
 
     public Simulator() throws IOException, InterruptedException {
         // Create world
@@ -61,14 +62,21 @@ public class Simulator {
         //v.setDragRotate(0.1);
         vehicle = v;
         world.addObject(v);
+        target = new Target(world, 0.3);
+        target.setMass(90.0);
+        target.initGPS(55.753395, 37.625427);
+        target.getPosition().set(5, 0, -5);
+        world.addObject(target);
         // Create visualizer
         visualizer = new Visualizer(world);
-        visualizer.setViewerTarget(v);
+        visualizer.setViewerTarget(target);
+        visualizer.setViewerPosition(v);
+        visualizer.setAutoRotate(false);
         // Create and open port
         gotHeartBeat = false;
         inited = false;
         SerialMAVLinkPort serialMAVLinkPort = new SerialMAVLinkPort();
-        //serialMAVLinkPort.open("/dev/tty.usbmodem1", 230400, 8, 1, 0);
+        serialMAVLinkPort.open("/dev/tty.usbmodem1", 230400, 8, 1, 0);
         UDPMavLinkPort udpMavLinkPort = new UDPMavLinkPort();
         udpMavLinkPort.open(new InetSocketAddress(14555));
         mavlinkPort = serialMAVLinkPort;
@@ -159,6 +167,17 @@ public class Simulator {
             msg_gps.fix_type = 3;
             msg_gps.satellites_visible = 10;
             mavlinkPort.sendMessage(msg_gps);
+
+            msg_global_position_int msg_target = new msg_global_position_int(2, componentId);
+            GPSPosition target_pos = target.getGPS();
+            msg_target.time_boot_ms = tu;
+            msg_target.lat = (long) (target_pos.lat * 1e7);
+            msg_target.lon = (long) (target_pos.lon * 1e7);
+            msg_target.alt = (long) (target_pos.alt * 1e3);
+            msg_target.vx = (int) (target_pos.vn * 100);
+            msg_target.vy = (int) (target_pos.ve * 100);
+            msg_target.vz = (int) (target_pos.vd * 100);
+            mavlinkPort.sendMessage(msg_target);
         }
     }
 
@@ -179,7 +198,7 @@ public class Simulator {
                 mavlinkPort.sendMessage(msg);
             }
             long t = System.currentTimeMillis();
-            vehicle.update(t);
+            world.update(t);
             visualizer.update(t);
             if (mavlinkPort.isOpened() && inited)
                 sendMavLinkMessages();
