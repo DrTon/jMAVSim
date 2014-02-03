@@ -28,6 +28,7 @@ public class Simulator {
     private int sysId = -1;
     private int componentId = -1;
     private int sleepInterval = 10;
+    private int visualizerSleepInterval = 20;
     private long nextRun = 0;
     private long msgIntervalGPS = 200;
     private long msgLastGPS = 0;
@@ -182,6 +183,19 @@ public class Simulator {
     }
 
     public void run() throws IOException, InterruptedException {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    visualizer.update();
+                    try {
+                        Thread.sleep(visualizerSleepInterval);
+                    } catch (InterruptedException e) {
+                        break;
+                    }
+                }
+            }
+        }).start();
         nextRun = System.currentTimeMillis() + sleepInterval;
         while (true) {
             while (System.currentTimeMillis() < nextRun - sleepInterval * 3 / 4) {
@@ -199,7 +213,6 @@ public class Simulator {
             }
             long t = System.currentTimeMillis();
             world.update(t);
-            visualizer.update(t);
             if (mavlinkPort.isOpened() && inited)
                 sendMavLinkMessages();
             long timeLeft = Math.max(sleepInterval / 4, nextRun - System.currentTimeMillis());

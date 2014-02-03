@@ -131,7 +131,7 @@ public class Visualizer {
         universe.getViewingPlatform().getViewPlatformTransform().setTransform(viewerTransform);
     }
 
-    public void update(long t) {
+    public void update() {
         updateViewer();
     }
 }
