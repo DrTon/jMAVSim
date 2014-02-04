@@ -14,7 +14,7 @@ public interface MAVLinkPort {
 
     boolean hasNextMessage() throws IOException;
 
-    MAVLinkMessage getNextMessage() throws IOException;
+    MAVLinkMessage getNextMessage(boolean blocking) throws IOException;
 
     void sendMessage(MAVLinkMessage msg) throws IOException;
 }

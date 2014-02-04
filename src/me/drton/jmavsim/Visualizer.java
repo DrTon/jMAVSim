@@ -132,6 +132,8 @@ public class Visualizer {
     }
 
     public void update() {
-        updateViewer();
+        synchronized (world) {
+            updateViewer();
+        }
     }
 }

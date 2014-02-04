@@ -82,9 +82,9 @@ public class UDPMavLinkPort implements MAVLinkPort {
     }
 
     @Override
-    public MAVLinkMessage getNextMessage() throws IOException {
+    public MAVLinkMessage getNextMessage(boolean blocking) throws IOException {
         if (isOpened())
-            return reader.getNextMessageWithoutBlocking();
+            return blocking ? reader.getNextMessage() : reader.getNextMessageWithoutBlocking();
         else
             return null;
     }
@@ -103,14 +103,11 @@ public class UDPMavLinkPort implements MAVLinkPort {
         UDPMavLinkPort port = new UDPMavLinkPort();
         port.open(new InetSocketAddress(14555));
         while (true) {
-            if (port.hasNextMessage()) {
-                MAVLinkMessage msg = port.getNextMessage();
-                if (msg != null) {
-                    System.out.println(msg);
-                }
-            } else {
-                Thread.sleep(100);
+            MAVLinkMessage msg = port.getNextMessage(false);
+            if (msg != null) {
+                System.out.println(msg.sysId + " " + msg.componentId + " " + msg);
             }
+            Thread.sleep(10);
         }
     }
 }

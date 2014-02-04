@@ -199,14 +199,14 @@ public class Simulator {
         nextRun = System.currentTimeMillis() + sleepInterval;
         while (true) {
             while (System.currentTimeMillis() < nextRun - sleepInterval * 3 / 4) {
-                MAVLinkMessage msg = mavlinkPort.getNextMessage();
+                MAVLinkMessage msg = mavlinkPort.getNextMessage(false);
                 if (msg == null)
                     break;
                 handleMavLinkMessage(msg);
                 mavlinkPort1.sendMessage(msg);
             }
             while (System.currentTimeMillis() < nextRun - sleepInterval * 3 / 4) {
-                MAVLinkMessage msg = mavlinkPort1.getNextMessage();
+                MAVLinkMessage msg = mavlinkPort1.getNextMessage(false);
                 if (msg == null)
                     break;
                 mavlinkPort.sendMessage(msg);

@@ -5,10 +5,13 @@ import jssc.SerialPortException;
 import org.mavlink.IMAVLinkMessage;
 import org.mavlink.MAVLinkReader;
 import org.mavlink.messages.MAVLinkMessage;
+import org.mavlink.messages.common.msg_heartbeat;
+import org.mavlink.messages.common.msg_radio_status;
 
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 
 /**
  * User: ton Date: 28.11.13 Time: 23:30
@@ -73,9 +76,9 @@ public class SerialMAVLinkPort implements MAVLinkPort {
     }
 
     @Override
-    public MAVLinkMessage getNextMessage() throws IOException {
+    public MAVLinkMessage getNextMessage(boolean blocking) throws IOException {
         if (isOpened())
-            return reader.getNextMessageWithoutBlocking();
+            return blocking ? reader.getNextMessage() : reader.getNextMessageWithoutBlocking();
         else
             return null;
     }
@@ -87,6 +90,25 @@ public class SerialMAVLinkPort implements MAVLinkPort {
                 serialPort.writeBytes(msg.encode());
             } catch (SerialPortException e) {
                 throw new IOException(e);
+            }
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException, IOException {
+        SerialMAVLinkPort port = new SerialMAVLinkPort();
+        port.open("/dev/tty.usbserial-DN006L8F", 57600, 8, 1, 0);
+        long last_hrt = 0;
+        while (true) {
+            MAVLinkMessage msg = port.getNextMessage(true);
+            if (msg != null) {
+                if (msg instanceof msg_radio_status)
+                    System.out.println(msg);
+            }
+            if (System.currentTimeMillis() - last_hrt > 1000) {
+                msg_heartbeat heartbeat = new msg_heartbeat(255, 0);
+                System.out.println("Send " + heartbeat);
+                port.sendMessage(heartbeat);
+                last_hrt = System.currentTimeMillis();
             }
         }
     }
