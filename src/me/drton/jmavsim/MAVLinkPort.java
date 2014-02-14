@@ -1,20 +1,14 @@
 package me.drton.jmavsim;
 
-import org.mavlink.messages.MAVLinkMessage;
-
 import java.io.IOException;
 
 /**
  * User: ton Date: 02.12.13 Time: 20:56
  */
-public interface MAVLinkPort {
-    void close() throws IOException;
+public abstract class MAVLinkPort extends MAVLinkNode {
+    public abstract void close() throws IOException;
 
-    boolean isOpened();
+    public abstract boolean isOpened();
 
-    boolean hasNextMessage() throws IOException;
-
-    MAVLinkMessage getNextMessage(boolean blocking) throws IOException;
-
-    void sendMessage(MAVLinkMessage msg) throws IOException;
+    public abstract void update(long t);
 }

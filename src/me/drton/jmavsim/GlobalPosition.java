@@ -3,7 +3,7 @@ package me.drton.jmavsim;
 /**
  * User: ton Date: 01.12.13 Time: 22:25
  */
-public class GPSPosition {
+public class GlobalPosition {
     public double lat;
     public double lon;
     public double alt;

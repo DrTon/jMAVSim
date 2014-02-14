@@ -16,5 +16,5 @@ public interface Sensors {
 
     double getPressureAlt();
 
-    GPSPosition getGPS();
+    GlobalPosition getGlobalPosition();
 }

@@ -8,10 +8,10 @@ import javax.vecmath.Vector3d;
  */
 public class SimpleSensors implements Sensors {
     private MechanicalObject object;
-    private GlobalPositionProjector gpsProjector = new GlobalPositionProjector();
+    private GlobalPositionProjector globalProjector = new GlobalPositionProjector();
 
     public void initGPS(double lat, double lon) {
-        gpsProjector.init(lat, lon);
+        globalProjector.init(lat, lon);
     }
 
     @Override
@@ -49,9 +49,9 @@ public class SimpleSensors implements Sensors {
     }
 
     @Override
-    public GPSPosition getGPS() {
-        double[] latlon = gpsProjector.reproject(object.getPosition().x, object.getPosition().y);
-        GPSPosition gps = new GPSPosition();
+    public GlobalPosition getGlobalPosition() {
+        double[] latlon = globalProjector.reproject(object.getPosition().x, object.getPosition().y);
+        GlobalPosition gps = new GlobalPosition();
         gps.lat = latlon[0];
         gps.lon = latlon[1];
         gps.alt = -object.getPosition().z;

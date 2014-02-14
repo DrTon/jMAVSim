@@ -32,7 +32,7 @@ public class Target extends VisualObject {
         Vector3d mg = new Vector3d(getWorld().getEnvironment().getG());
         mg.scale(-mass);
         f.add(mg);
-        if (lastTime - startTime > 30000)
+        if (lastTime - startTime > 60000)
             f.add(new Vector3d(0.0, Math.exp(-position.length() / 700.0) * mass * 9.81 * 0.025, 0.0));
         return f;
     }
@@ -42,9 +42,9 @@ public class Target extends VisualObject {
         return new Vector3d(0.0, 0.0, 0.0);
     }
 
-    public GPSPosition getGPS() {
+    public GlobalPosition getGlobalPosition() {
         double[] latlon = gpsProjector.reproject(getPosition().x, getPosition().y);
-        GPSPosition gps = new GPSPosition();
+        GlobalPosition gps = new GlobalPosition();
         gps.lat = latlon[0];
         gps.lon = latlon[1];
         gps.alt = -getPosition().z;

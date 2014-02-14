@@ -7,7 +7,6 @@ import org.mavlink.messages.MAVLinkMessage;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
@@ -15,16 +14,14 @@ import java.nio.channels.DatagramChannel;
 /**
  * User: ton Date: 02.12.13 Time: 20:56
  */
-public class UDPMavLinkPort implements MAVLinkPort {
+public class UDPMavLinkPort extends MAVLinkPort {
     private DatagramChannel channel;
     private ByteBuffer rxBuffer = ByteBuffer.allocate(8192);
     private ByteBuffer txBuffer = ByteBuffer.allocate(8192);
     private MAVLinkReader reader;
-    private SocketAddress listenAddress;
     private SocketAddress sendAddress;
 
     public void open(SocketAddress address) throws IOException {
-        this.listenAddress = address;
         channel = DatagramChannel.open();
         channel.socket().bind(address);
         channel.configureBlocking(false);
@@ -73,41 +70,27 @@ public class UDPMavLinkPort implements MAVLinkPort {
     }
 
     @Override
-    public boolean hasNextMessage() throws IOException {
-        if (!isOpened())
-            return false;
-        if (rxBuffer.remaining() == 0)
-            fillBuffer();
-        return rxBuffer.remaining() > 0;
-    }
-
-    @Override
-    public MAVLinkMessage getNextMessage(boolean blocking) throws IOException {
-        if (isOpened())
-            return blocking ? reader.getNextMessage() : reader.getNextMessageWithoutBlocking();
-        else
-            return null;
-    }
-
-    @Override
-    public void sendMessage(MAVLinkMessage msg) throws IOException {
+    public void handleMessage(MAVLinkMessage msg) {
         if (isOpened() && sendAddress != null) {
             txBuffer.clear();
-            txBuffer.put(msg.encode());
-            txBuffer.flip();
-            channel.send(txBuffer, sendAddress);
+            try {
+                txBuffer.put(msg.encode());
+                txBuffer.flip();
+                channel.send(txBuffer, sendAddress);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
-    public static void main(String[] args) throws IOException, InterruptedException {
-        UDPMavLinkPort port = new UDPMavLinkPort();
-        port.open(new InetSocketAddress(14555));
-        while (true) {
-            MAVLinkMessage msg = port.getNextMessage(false);
-            if (msg != null) {
-                System.out.println(msg.sysId + " " + msg.componentId + " " + msg);
-            }
-            Thread.sleep(10);
+    @Override
+    public void update(long t) {
+        MAVLinkMessage msg;
+        while (isOpened()) {
+            msg = reader.getNextMessageWithoutBlocking();
+            if (msg == null)
+                break;
+            sendMessage(msg);
         }
     }
 }
