@@ -16,6 +16,7 @@ import java.io.InputStream;
 public class SerialMAVLinkPort extends MAVLinkPort {
     private SerialPort serialPort;
     private MAVLinkReader reader;
+    private long bytesReceived = 0;
 
     public void open(String portName, int baudRate, int dataBits, int stopBits, int parity) throws IOException {
         serialPort = new SerialPort(portName);
@@ -30,6 +31,7 @@ public class SerialMAVLinkPort extends MAVLinkPort {
             public int read() throws IOException {
                 try {
                     byte[] b = serialPort.readBytes(1);
+                    bytesReceived++;
                     return b[0] & 0xff;
                 } catch (SerialPortException e) {
                     throw new IOException(e);
@@ -84,4 +86,24 @@ public class SerialMAVLinkPort extends MAVLinkPort {
             sendMessage(msg);
         }
     }
+
+    public static void main(String[] args) throws InterruptedException, IOException {
+        SerialMAVLinkPort port = new SerialMAVLinkPort();
+        //port.open("/dev/tty.usbserial-DC008SB7", 57600, 8, 1, 0);
+        port.open("/dev/tty.usbmodem1", 57600, 8, 1, 0);
+        long bytesReceivedPrev = 0;
+        long timePrev = 0;
+        while (true) {
+            long t = System.currentTimeMillis();
+            port.update(t);
+            if (t - timePrev > 2000) {
+                long bytesReceived = port.bytesReceived;
+                double b = (bytesReceived - bytesReceivedPrev) * 1000.0 / (t - timePrev);
+                bytesReceivedPrev = bytesReceived;
+                timePrev = t;
+                System.out.printf("%.3f bytes/s\n", b);
+            }
+        }
+    }
+
 }

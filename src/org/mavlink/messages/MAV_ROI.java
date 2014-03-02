@@ -30,4 +30,8 @@ public interface MAV_ROI {
      * Point toward of given id.
      */
     public final static int MAV_ROI_TARGET = 4;
+    /**
+     * Follow system with given id. Position offset is the difference between ROI and following waypoint.
+     */
+    public final static int MAV_ROI_FOLLOW = 5;
 }

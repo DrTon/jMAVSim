@@ -2,7 +2,7 @@ package me.drton.jmavsim;
 
 import me.drton.jmavsim.vehicle.AbstractVehicle;
 import org.mavlink.messages.MAVLinkMessage;
-import org.mavlink.messages.common.*;
+import org.mavlink.messages.px4.*;
 
 import javax.vecmath.Vector3d;
 import java.util.Arrays;
@@ -22,10 +22,13 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
     private long initDelay = 1000;
     private long msgIntervalGPS = 200;
     private long msgLastGPS = 0;
+    private long msgDelayGPS = 20000;
 
     public MAVLinkHILSystem(int sysId, int componentId, AbstractVehicle vehicle) {
         super(sysId, componentId);
         this.vehicle = vehicle;
+        // TODO hack
+        msgLastGPS = System.currentTimeMillis() + msgDelayGPS;
     }
 
     @Override
@@ -105,7 +108,7 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
 
     private void initMavLink() {
         // Set HIL mode
-        org.mavlink.messages.common.msg_set_mode msg = new org.mavlink.messages.common.msg_set_mode(sysId, componentId);
+        msg_set_mode msg = new msg_set_mode(sysId, componentId);
         msg.base_mode = 32;     // HIL, disarmed
         sendMessage(msg);
     }

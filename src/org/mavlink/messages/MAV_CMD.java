@@ -90,7 +90,7 @@ public interface MAV_CMD {
      * PARAM 1 : Region of intereset mode. (see MAV_ROI enum)
      * PARAM 2 : MISSION index/ target ID. (see MAV_ROI enum)
      * PARAM 3 : ROI index (allows a vehicle to manage multiple ROI's)
-     * PARAM 4 : Empty
+     * PARAM 4 : Interpolation mode for MAV_ROI_FOLLOW mode. 0: No interpolation, 1: Linear interpolation, 2: Spline interpolation
      * PARAM 5 : x the location of the fixed ROI (see MAV_FRAME)
      * PARAM 6 : y
      * PARAM 7 : z
@@ -312,7 +312,7 @@ public interface MAV_CMD {
      * PARAM 3 : Ground pressure: 0: no, 1: yes
      * PARAM 4 : Radio calibration: 0: no, 1: yes
      * PARAM 5 : Accelerometer calibration: 0: no, 1: yes
-     * PARAM 6 : Empty
+     * PARAM 6 : Compass/Motor interference calibration: 0: no, 1: yes
      * PARAM 7 : Empty
      */
     public final static int MAV_CMD_PREFLIGHT_CALIBRATION = 241;
