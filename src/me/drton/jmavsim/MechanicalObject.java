@@ -17,7 +17,7 @@ public abstract class MechanicalObject extends WorldObject {
     protected double mass = 1.0;
     protected Matrix3d momentOfInertia = new Matrix3d();
     protected Matrix3d momentOfInertiaInv = new Matrix3d();
-    private Sensors sensors;
+    private Sensors sensors = null;
 
     public MechanicalObject(World world) {
         super(world);
@@ -109,6 +109,8 @@ public abstract class MechanicalObject extends WorldObject {
             rotationRate.add(angularAcc);
         }
         lastTime = t;
+        if (sensors != null)
+            sensors.update(t);
     }
 
     protected abstract Vector3d getForce();
