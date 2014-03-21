@@ -17,4 +17,6 @@ public interface Sensors {
     double getPressureAlt();
 
     GlobalPosition getGlobalPosition();
+
+    void update(long t);
 }

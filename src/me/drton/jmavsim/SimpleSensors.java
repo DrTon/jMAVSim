@@ -60,6 +60,12 @@ public class SimpleSensors implements Sensors {
         gps.vn = object.getVelocity().x;
         gps.ve = object.getVelocity().y;
         gps.vd = object.getVelocity().z;
+        gps.fix = 3;
+        gps.time = System.currentTimeMillis() * 1000;
         return gps;
+    }
+
+    @Override
+    public void update(long t) {
     }
 }

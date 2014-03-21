@@ -12,6 +12,8 @@ public class GlobalPosition {
     public double vn;
     public double ve;
     public double vd;
+    public int fix;
+    public long time;
 
     public double getSpeed() {
         return Math.sqrt(vn * vn + ve * ve);

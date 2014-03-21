@@ -26,6 +26,7 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
     public MAVLinkHILSystem(int sysId, int componentId, AbstractVehicle vehicle) {
         super(sysId, componentId);
         this.vehicle = vehicle;
+        msgLastGPS = System.currentTimeMillis() + 10000;
     }
 
     @Override
@@ -97,7 +98,7 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
             msg_gps.epv = (int) (gps.epv * 100);
             msg_gps.vel = (int) (gps.getSpeed() * 100);
             msg_gps.cog = (int) (gps.getCog() / Math.PI * 18000.0);
-            msg_gps.fix_type = 3;
+            msg_gps.fix_type = gps.fix;
             msg_gps.satellites_visible = 10;
             sendMessage(msg_gps);
         }
