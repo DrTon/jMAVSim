@@ -84,4 +84,12 @@ public class SerialMAVLinkPort extends MAVLinkPort {
             sendMessage(msg);
         }
     }
+
+    public void sendRaw(byte[] data) throws IOException {
+        try {
+            serialPort.writeBytes(data);
+        } catch (SerialPortException e) {
+            throw new IOException(e);
+        }
+    }
 }
