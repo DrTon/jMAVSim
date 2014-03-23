@@ -15,7 +15,7 @@ import java.nio.channels.DatagramChannel;
  * User: ton Date: 02.12.13 Time: 20:56
  */
 public class UDPMavLinkPort extends MAVLinkPort {
-    private DatagramChannel channel;
+    private DatagramChannel channel = null;
     private ByteBuffer rxBuffer = ByteBuffer.allocate(8192);
     private ByteBuffer txBuffer = ByteBuffer.allocate(8192);
     private MAVLinkReader reader;
@@ -61,12 +61,14 @@ public class UDPMavLinkPort extends MAVLinkPort {
 
     @Override
     public void close() throws IOException {
-        channel.close();
+        if (channel != null) {
+            channel.close();
+        }
     }
 
     @Override
     public boolean isOpened() {
-        return channel.isOpen();
+        return channel != null && channel.isOpen();
     }
 
     @Override

@@ -18,9 +18,13 @@ public class MavlinkTest {
             public void handleMessage(MAVLinkMessage msg) {
                 System.out.println(msg);
             }
+
+            @Override
+            public void update(long t) {
+            }
         };
         connection.addNode(node);
-        port.open("/dev/tty.usbserial-DC008SB7", 57600, 8, 1, 0);
+        port.open("/dev/tty.usbserial-DN006L8F", 57600, 8, 1, 0);
         while (true) {
             port.update(System.currentTimeMillis());
         }
