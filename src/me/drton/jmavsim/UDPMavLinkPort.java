@@ -95,4 +95,8 @@ public class UDPMavLinkPort extends MAVLinkPort {
             sendMessage(msg);
         }
     }
+
+    public void setSendAddress(SocketAddress sendAddress) {
+        this.sendAddress = sendAddress;
+    }
 }
