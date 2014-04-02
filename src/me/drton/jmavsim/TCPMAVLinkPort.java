@@ -9,22 +9,23 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.DatagramChannel;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 
 /**
- * User: ton Date: 02.12.13 Time: 20:56
+ * User: ton Date: 01.04.14 Time: 22:18
  */
-public class UDPMavLinkPort extends MAVLinkPort {
-    private DatagramChannel channel = null;
+public class TCPMAVLinkPort extends MAVLinkPort {
+    private ServerSocketChannel serverChannel = null;
+    private SocketChannel channel = null;
     private ByteBuffer rxBuffer = ByteBuffer.allocate(8192);
     private ByteBuffer txBuffer = ByteBuffer.allocate(8192);
     private MAVLinkReader reader;
-    private SocketAddress sendAddress;
 
     public void open(SocketAddress address) throws IOException {
-        channel = DatagramChannel.open();
-        channel.socket().bind(address);
-        channel.configureBlocking(false);
+        serverChannel = ServerSocketChannel.open();
+        serverChannel.socket().bind(address);
+        serverChannel.configureBlocking(false);
         rxBuffer.flip();
         DataInputStream inputStream = new DataInputStream(new InputStream() {
             @Override
@@ -52,11 +53,24 @@ public class UDPMavLinkPort extends MAVLinkPort {
 
     private void fillBuffer() throws IOException {
         // Receive new packet
-        rxBuffer.compact();
-        SocketAddress addr = channel.receive(rxBuffer);
-        if (addr != null)
-            sendAddress = addr;
-        rxBuffer.flip();
+        if (channel == null) {
+            // Wait for new connection
+            channel = serverChannel.accept();
+            if (channel != null) {
+                System.out.println("Accepted connection from: " + channel.socket().getInetAddress());
+                channel.finishConnect();
+            }
+        }
+        if (channel != null && channel.isConnected()) {
+            rxBuffer.compact();
+            int n = channel.read(rxBuffer);
+            if (n < 0) {
+                System.out.println("Connection closed: " + channel.socket().getInetAddress());
+                channel.close();
+                channel = null;
+            }
+            rxBuffer.flip();
+        }
     }
 
     @Override
@@ -64,21 +78,24 @@ public class UDPMavLinkPort extends MAVLinkPort {
         if (channel != null) {
             channel.close();
         }
+        if (serverChannel != null) {
+            serverChannel.close();
+        }
     }
 
     @Override
     public boolean isOpened() {
-        return channel != null && channel.isOpen();
+        return serverChannel != null && serverChannel.isOpen();
     }
 
     @Override
     public void handleMessage(MAVLinkMessage msg) {
-        if (isOpened() && sendAddress != null) {
+        if (channel != null && channel.isConnected()) {
             txBuffer.clear();
             try {
                 txBuffer.put(msg.encode());
                 txBuffer.flip();
-                channel.send(txBuffer, sendAddress);
+                channel.write(txBuffer);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -94,9 +111,5 @@ public class UDPMavLinkPort extends MAVLinkPort {
                 break;
             sendMessage(msg);
         }
-    }
-
-    public void setSendAddress(SocketAddress sendAddress) {
-        this.sendAddress = sendAddress;
     }
 }

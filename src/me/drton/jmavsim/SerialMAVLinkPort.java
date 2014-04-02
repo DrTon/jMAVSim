@@ -87,23 +87,11 @@ public class SerialMAVLinkPort extends MAVLinkPort {
         }
     }
 
-    public static void main(String[] args) throws InterruptedException, IOException {
-        SerialMAVLinkPort port = new SerialMAVLinkPort();
-        //port.open("/dev/tty.usbserial-DC008SB7", 57600, 8, 1, 0);
-        port.open("/dev/tty.usbmodem1", 57600, 8, 1, 0);
-        long bytesReceivedPrev = 0;
-        long timePrev = 0;
-        while (true) {
-            long t = System.currentTimeMillis();
-            port.update(t);
-            if (t - timePrev > 2000) {
-                long bytesReceived = port.bytesReceived;
-                double b = (bytesReceived - bytesReceivedPrev) * 1000.0 / (t - timePrev);
-                bytesReceivedPrev = bytesReceived;
-                timePrev = t;
-                System.out.printf("%.3f bytes/s\n", b);
-            }
+    public void sendRaw(byte[] data) throws IOException {
+        try {
+            serialPort.writeBytes(data);
+        } catch (SerialPortException e) {
+            throw new IOException(e);
         }
     }
-
 }

@@ -69,6 +69,7 @@ public class Simulator {
         visualizer.setAutoRotate(false);
         // Open ports
         serialMAVLinkPort.open("/dev/tty.usbmodem1", 230400, 8, 1, 0);
+        serialMAVLinkPort.sendRaw("\nsh /etc/init.d/rc.usb\n".getBytes());
         udpMavLinkPort.open(new InetSocketAddress(14555));
         // Run
         try {
