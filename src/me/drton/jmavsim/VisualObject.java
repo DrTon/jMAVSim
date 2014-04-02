@@ -24,9 +24,6 @@ public abstract class VisualObject extends MechanicalObject {
         transformGroup.setTransform(transform);
         branchGroup = new BranchGroup();
         branchGroup.addChild(transformGroup);
-        rotation.rotX(0);
-        momentOfInertia.rotZ(0.0);
-        momentOfInertiaInv.rotZ(0.0);
     }
 
     /**

@@ -21,6 +21,9 @@ public abstract class MechanicalObject extends WorldObject {
 
     public MechanicalObject(World world) {
         super(world);
+        rotation.rotX(0);
+        momentOfInertia.rotZ(0.0);
+        momentOfInertiaInv.rotZ(0.0);
     }
 
     public double getMass() {
