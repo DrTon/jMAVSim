@@ -54,6 +54,9 @@ public class Simulator {
         vehicle.setSensors(sensors);
         vehicle.setDragMove(0.02);
         //v.setDragRotate(0.1);
+        CameraGimbal2D gimbal = new CameraGimbal2D(world);
+        gimbal.setBaseObject(vehicle);
+        world.addObject(gimbal);
         connHIL.addNode(new MAVLinkHILSystem(10, 0, vehicle));
         world.addObject(vehicle);
         Target target = new Target(world, 0.3);
@@ -65,7 +68,7 @@ public class Simulator {
         // Create visualizer
         visualizer = new Visualizer(world);
         visualizer.setViewerTarget(target);
-        visualizer.setViewerPosition(vehicle);
+        visualizer.setViewerPosition(gimbal);
         visualizer.setAutoRotate(false);
         // Open ports
         serialMAVLinkPort.open("/dev/tty.usbmodem1", 230400, 8, 1, 0);
