@@ -62,7 +62,7 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
 
     @Override
     public void update(long t) {
-        super.update(t);
+        // Don't call super.update(), because heartbeats already sent by autopilot
         long tu = t * 1000;
         Sensors sensors = vehicle.getSensors();
         // Sensors
