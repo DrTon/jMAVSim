@@ -56,6 +56,8 @@ public class Simulator {
         //v.setDragRotate(0.1);
         CameraGimbal2D gimbal = new CameraGimbal2D(world);
         gimbal.setBaseObject(vehicle);
+        gimbal.setPitchChannel(4);
+        gimbal.setPitchScale(1.9);
         world.addObject(gimbal);
         connHIL.addNode(new MAVLinkHILSystem(10, 0, vehicle));
         world.addObject(vehicle);
