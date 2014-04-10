@@ -24,4 +24,8 @@ public abstract class AbstractVehicle extends VisualObject {
     public void setControl(List<Double> control) {
         this.control = new ArrayList<Double>(control);
     }
+
+    public List<Double> getControl() {
+        return control;
+    }
 }
