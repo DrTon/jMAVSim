@@ -59,7 +59,8 @@ public class Simulator {
         gimbal.setPitchChannel(4);
         gimbal.setPitchScale(1.9);
         world.addObject(gimbal);
-        connHIL.addNode(new MAVLinkHILSystem(10, 0, vehicle));
+        // SysId should be the same as autopilot, ComponentId should be different!
+        connHIL.addNode(new MAVLinkHILSystem(1, 51, vehicle));
         world.addObject(vehicle);
         Target target = new Target(world, 0.3);
         target.setMass(90.0);

@@ -15,6 +15,8 @@ import java.util.List;
  * User: ton Date: 13.02.14 Time: 22:04
  */
 public class MAVLinkHILSystem extends MAVLinkSystem {
+    // MAVLinkHILSystem has the same sysID as autopilot, but different componentId
+    private int hilComponentId = -1;    // componentId of the autopilot
     private AbstractVehicle vehicle;
     private boolean gotHeartBeat = false;
     private boolean inited = false;
@@ -23,6 +25,14 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
     private long msgIntervalGPS = 200;
     private long msgLastGPS = 0;
 
+    /**
+     * Create MAVLinkHILSimulator, MAVLink system thet sends simulated sensors to autopilot and passes controls from
+     * autopilot to simulator
+     *
+     * @param sysId       SysId of simulator should be the same as autopilot
+     * @param componentId ComponentId of simulator should be different from autopilot
+     * @param vehicle
+     */
     public MAVLinkHILSystem(int sysId, int componentId, AbstractVehicle vehicle) {
         super(sysId, componentId);
         this.vehicle = vehicle;
@@ -34,16 +44,17 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
         super.handleMessage(msg);
         long t = System.currentTimeMillis();
         if (msg instanceof msg_hil_controls) {
-            msg_hil_controls msg_hil = (msg_hil_controls) msg;
-            List<Double> control = Arrays.asList((double) msg_hil.roll_ailerons, (double) msg_hil.pitch_elevator,
-                    (double) msg_hil.yaw_rudder, (double) msg_hil.throttle, (double) msg_hil.aux1,
-                    (double) msg_hil.aux2, (double) msg_hil.aux3, (double) msg_hil.aux4);
+            msg_hil_controls hil_controls = (msg_hil_controls) msg;
+            List<Double> control = Arrays.asList((double) hil_controls.roll_ailerons,
+                    (double) hil_controls.pitch_elevator, (double) hil_controls.yaw_rudder,
+                    (double) hil_controls.throttle, (double) hil_controls.aux1, (double) hil_controls.aux2,
+                    (double) hil_controls.aux3, (double) hil_controls.aux4);
+            System.out.println(control);
             vehicle.setControl(control);
         } else if (msg instanceof msg_heartbeat) {
-            msg_heartbeat msg_heartbeat = (msg_heartbeat) msg;
-            if (!gotHeartBeat) {
-                sysId = msg_heartbeat.sysId;
-                componentId = msg_heartbeat.componentId;
+            msg_heartbeat heartbeat = (msg_heartbeat) msg;
+            if (!gotHeartBeat && sysId == heartbeat.sysId) {
+                hilComponentId = heartbeat.componentId;
                 gotHeartBeat = true;
                 initTime = t + initDelay;
             }
@@ -52,7 +63,7 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
                 initMavLink();
                 inited = true;
             }
-            if ((msg_heartbeat.base_mode & 128) == 0) {
+            if ((heartbeat.base_mode & 128) == 0) {
                 vehicle.setControl(Collections.<Double>emptyList());
             }
         } else if (msg instanceof msg_statustext) {
@@ -107,6 +118,7 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
     private void initMavLink() {
         // Set HIL mode
         msg_set_mode msg = new msg_set_mode(sysId, componentId);
+        msg.target_system = sysId;
         msg.base_mode = 32;     // HIL, disarmed
         sendMessage(msg);
     }
