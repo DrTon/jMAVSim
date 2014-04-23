@@ -54,11 +54,11 @@ public class Simulator {
         vehicle.setSensors(sensors);
         vehicle.setDragMove(0.02);
         //v.setDragRotate(0.1);
-        CameraGimbal2D gimbal = new CameraGimbal2D(world);
-        gimbal.setBaseObject(vehicle);
-        gimbal.setPitchChannel(4);
-        gimbal.setPitchScale(1.9);
-        world.addObject(gimbal);
+        //CameraGimbal2D gimbal = new CameraGimbal2D(world);
+        //gimbal.setBaseObject(vehicle);
+        //gimbal.setPitchChannel(4);
+        //gimbal.setPitchScale(1.9);
+        //world.addObject(gimbal);
         // SysId should be the same as autopilot, ComponentId should be different!
         connHIL.addNode(new MAVLinkHILSystem(1, 51, vehicle));
         world.addObject(vehicle);
@@ -71,7 +71,7 @@ public class Simulator {
         // Create visualizer
         visualizer = new Visualizer(world);
         visualizer.setViewerTarget(target);
-        visualizer.setViewerPosition(gimbal);
+        visualizer.setViewerPosition(vehicle);
         visualizer.setAutoRotate(false);
         // Open ports
         serialMAVLinkPort.open("/dev/tty.usbmodem1", 230400, 8, 1, 0);
