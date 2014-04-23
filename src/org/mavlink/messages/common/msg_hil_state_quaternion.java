@@ -29,7 +29,7 @@ public class msg_hil_state_quaternion extends MAVLinkMessage {
    */
   public long time_usec;
   /**
-   * me.drton.jmavsim.Vehicle attitude expressed as normalized quaternion
+   * Vehicle attitude expressed as normalized quaternion
    */
   public float[] attitude_quaternion = new float[4];
   /**

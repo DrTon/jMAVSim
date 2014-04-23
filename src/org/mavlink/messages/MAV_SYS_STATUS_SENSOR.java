@@ -76,4 +76,20 @@ public interface MAV_SYS_STATUS_SENSOR {
      * 0x10000 rc receiver
      */
     public final static int MAV_SYS_STATUS_SENSOR_RC_RECEIVER = 65536;
+    /**
+     * 0x20000 2nd 3D gyro
+     */
+    public final static int MAV_SYS_STATUS_SENSOR_3D_GYRO2 = 131072;
+    /**
+     * 0x40000 2nd 3D accelerometer
+     */
+    public final static int MAV_SYS_STATUS_SENSOR_3D_ACCEL2 = 262144;
+    /**
+     * 0x80000 2nd 3D magnetometer
+     */
+    public final static int MAV_SYS_STATUS_SENSOR_3D_MAG2 = 524288;
+    /**
+     * 0x100000 geofence
+     */
+    public final static int MAV_SYS_STATUS_GEOFENCE = 1048576;
 }

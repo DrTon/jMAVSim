@@ -80,4 +80,8 @@ public interface MAV_TYPE {
      * Flapping wing
      */
     public final static int MAV_TYPE_KITE = 17;
+    /**
+     * Onboard companion controller
+     */
+    public final static int MAV_TYPE_ONBOARD_CONTROLLER = 18;
 }
