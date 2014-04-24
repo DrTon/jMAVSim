@@ -49,7 +49,6 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
                     (double) hil_controls.pitch_elevator, (double) hil_controls.yaw_rudder,
                     (double) hil_controls.throttle, (double) hil_controls.aux1, (double) hil_controls.aux2,
                     (double) hil_controls.aux3, (double) hil_controls.aux4);
-            System.out.println(control);
             vehicle.setControl(control);
         } else if (msg instanceof msg_heartbeat) {
             msg_heartbeat heartbeat = (msg_heartbeat) msg;

@@ -108,6 +108,17 @@ public interface MAV_CMD {
      */
     public final static int MAV_CMD_NAV_PATHPLANNING = 81;
     /**
+     * Navigate to MISSION using a spline path.
+     * PARAM 1 : Hold time in decimal seconds. (ignored by fixed wing, time to stay at MISSION for rotary wing)
+     * PARAM 2 : Empty
+     * PARAM 3 : Empty
+     * PARAM 4 : Empty
+     * PARAM 5 : Latitude/X of goal
+     * PARAM 6 : Longitude/Y of goal
+     * PARAM 7 : Altitude/Z of goal
+     */
+    public final static int MAV_CMD_NAV_SPLINE_WAYPOINT = 82;
+    /**
      * NOP - This command is only used to mark the upper limit of the NAV/ACTION commands in the enumeration
      * PARAM 1 : Empty
      * PARAM 2 : Empty
@@ -294,6 +305,94 @@ public interface MAV_CMD {
      * PARAM 7 : z
      */
     public final static int MAV_CMD_DO_SET_ROI = 201;
+    /**
+     * Mission command to configure an on-board camera controller system.
+     * PARAM 1 : Modes: P, TV, AV, M, Etc
+     * PARAM 2 : Shutter speed: Divisor number for one second
+     * PARAM 3 : Aperture: F stop number
+     * PARAM 4 : ISO number e.g. 80, 100, 200, Etc
+     * PARAM 5 : Exposure type enumerator
+     * PARAM 6 : Command Identity
+     * PARAM 7 : Main engine cut-off time before camera trigger in seconds/10 (0 means no cut-off)
+     */
+    public final static int MAV_CMD_DO_DIGICAM_CONFIGURE = 202;
+    /**
+     * Mission command to control an on-board camera controller system.
+     * PARAM 1 : Session control e.g. show/hide lens
+     * PARAM 2 : Zoom's absolute position
+     * PARAM 3 : Zooming step value to offset zoom from the current position
+     * PARAM 4 : Focus Locking, Unlocking or Re-locking
+     * PARAM 5 : Shooting Command
+     * PARAM 6 : Command Identity
+     * PARAM 7 : Empty
+     */
+    public final static int MAV_CMD_DO_DIGICAM_CONTROL = 203;
+    /**
+     * Mission command to configure a camera or antenna mount
+     * PARAM 1 : Mount operation mode (see MAV_MOUNT_MODE enum)
+     * PARAM 2 : stabilize roll? (1 = yes, 0 = no)
+     * PARAM 3 : stabilize pitch? (1 = yes, 0 = no)
+     * PARAM 4 : stabilize yaw? (1 = yes, 0 = no)
+     * PARAM 5 : Empty
+     * PARAM 6 : Empty
+     * PARAM 7 : Empty
+     */
+    public final static int MAV_CMD_DO_MOUNT_CONFIGURE = 204;
+    /**
+     * Mission command to control a camera or antenna mount
+     * PARAM 1 : pitch or lat in degrees, depending on mount mode.
+     * PARAM 2 : roll or lon in degrees depending on mount mode
+     * PARAM 3 : yaw or alt (in meters) depending on mount mode
+     * PARAM 4 : reserved
+     * PARAM 5 : reserved
+     * PARAM 6 : reserved
+     * PARAM 7 : MAV_MOUNT_MODE enum value
+     */
+    public final static int MAV_CMD_DO_MOUNT_CONTROL = 205;
+    /**
+     * Mission command to set CAM_TRIGG_DIST for this flight
+     * PARAM 1 : Camera trigger distance (meters)
+     * PARAM 2 : Empty
+     * PARAM 3 : Empty
+     * PARAM 4 : Empty
+     * PARAM 5 : Empty
+     * PARAM 6 : Empty
+     * PARAM 7 : Empty
+     */
+    public final static int MAV_CMD_DO_SET_CAM_TRIGG_DIST = 206;
+    /**
+     * Mission command to enable the geofence
+     * PARAM 1 : enable? (0=disable, 1=enable)
+     * PARAM 2 : Empty
+     * PARAM 3 : Empty
+     * PARAM 4 : Empty
+     * PARAM 5 : Empty
+     * PARAM 6 : Empty
+     * PARAM 7 : Empty
+     */
+    public final static int MAV_CMD_DO_FENCE_ENABLE = 207;
+    /**
+     * Mission command to trigger a parachute
+     * PARAM 1 : action (0=disable, 1=enable, 2=release, for some systems see PARACHUTE_ACTION enum, not in general message set.)
+     * PARAM 2 : Empty
+     * PARAM 3 : Empty
+     * PARAM 4 : Empty
+     * PARAM 5 : Empty
+     * PARAM 6 : Empty
+     * PARAM 7 : Empty
+     */
+    public final static int MAV_CMD_DO_PARACHUTE = 208;
+    /**
+     * Mission command to control a camera or antenna mount, using a quaternion as reference.
+     * PARAM 1 : q1 - quaternion param #1
+     * PARAM 2 : q2 - quaternion param #2
+     * PARAM 3 : q3 - quaternion param #3
+     * PARAM 4 : q4 - quaternion param #4
+     * PARAM 5 : Empty
+     * PARAM 6 : Empty
+     * PARAM 7 : Empty
+     */
+    public final static int MAV_CMD_DO_MOUNT_CONTROL_QUAT = 220;
     /**
      * NOP - This command is only used to mark the upper limit of the DO commands in the enumeration
      * PARAM 1 : Empty
