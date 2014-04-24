@@ -8,14 +8,14 @@ import org.mavlink.IMAVLinkCRC;
 import org.mavlink.MAVLinkCRC;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import org.mavlink.io.LittleEndianDataInputStream;
+import org.mavlink.io.LittleEndianDataOutputStream;
 /**
  * Class msg_global_position_time
  * The filtered global position (e.g. fused GPS and other sensors, e.g. baro and accelerometer) and time. The position is in GPS-frame (right-handed, Z-up). Latitude and longitude encoded as scaled integers since the resolution of float is not sufficient.
  **/
 public class msg_global_position_time extends MAVLinkMessage {
-  public static final int MAVLINK_MSG_ID_GLOBAL_POSITION_TIME = 126;
+  public static final int MAVLINK_MSG_ID_GLOBAL_POSITION_TIME = 127;
   private static final long serialVersionUID = MAVLINK_MSG_ID_GLOBAL_POSITION_TIME;
   public msg_global_position_time(int sysId, int componentId) {
     messageType = MAVLINK_MSG_ID_GLOBAL_POSITION_TIME;
@@ -59,36 +59,39 @@ public class msg_global_position_time extends MAVLinkMessage {
 /**
  * Decode message with raw data
  */
-public void decode(ByteBuffer dis) throws IOException {
-  time = (long)dis.getLong();
-  lat = (int)dis.getInt();
-  lon = (int)dis.getInt();
-  alt = (float)dis.getFloat();
-  vx = (float)dis.getFloat();
-  vy = (float)dis.getFloat();
-  vz = (float)dis.getFloat();
-  hdg = (int)dis.getShort()&0x00FFFF;
+public void decode(LittleEndianDataInputStream dis) throws IOException {
+  time = (long)dis.readLong();
+  lat = (int)dis.readInt();
+  lon = (int)dis.readInt();
+  alt = (float)dis.readFloat();
+  vx = (float)dis.readFloat();
+  vy = (float)dis.readFloat();
+  vz = (float)dis.readFloat();
+  hdg = (int)dis.readUnsignedShort()&0x00FFFF;
 }
 /**
  * Encode message with raw data and other informations
  */
 public byte[] encode() throws IOException {
   byte[] buffer = new byte[8+34];
-   ByteBuffer dos = ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN);
-  dos.put((byte)0xFE);
-  dos.put((byte)(length & 0x00FF));
-  dos.put((byte)(sequence & 0x00FF));
-  dos.put((byte)(sysId & 0x00FF));
-  dos.put((byte)(componentId & 0x00FF));
-  dos.put((byte)(messageType & 0x00FF));
-  dos.putLong(time);
-  dos.putInt((int)(lat&0x00FFFFFFFF));
-  dos.putInt((int)(lon&0x00FFFFFFFF));
-  dos.putFloat(alt);
-  dos.putFloat(vx);
-  dos.putFloat(vy);
-  dos.putFloat(vz);
-  dos.putShort((short)(hdg&0x00FFFF));
+   LittleEndianDataOutputStream dos = new LittleEndianDataOutputStream(new ByteArrayOutputStream());
+  dos.writeByte((byte)0xFE);
+  dos.writeByte(length & 0x00FF);
+  dos.writeByte(sequence & 0x00FF);
+  dos.writeByte(sysId & 0x00FF);
+  dos.writeByte(componentId & 0x00FF);
+  dos.writeByte(messageType & 0x00FF);
+  dos.writeLong(time);
+  dos.writeInt((int)(lat&0x00FFFFFFFF));
+  dos.writeInt((int)(lon&0x00FFFFFFFF));
+  dos.writeFloat(alt);
+  dos.writeFloat(vx);
+  dos.writeFloat(vy);
+  dos.writeFloat(vz);
+  dos.writeShort(hdg&0x00FFFF);
+  dos.flush();
+  byte[] tmp = dos.toByteArray();
+  for (int b=0; b<tmp.length; b++) buffer[b]=tmp[b];
   int crc = MAVLinkCRC.crc_calculate_encode(buffer, 34);
   crc = MAVLinkCRC.crc_accumulate((byte) IMAVLinkCRC.MAVLINK_MESSAGE_CRCS[messageType], crc);
   byte crcl = (byte) (crc & 0x00FF);
@@ -97,4 +100,6 @@ public byte[] encode() throws IOException {
   buffer[41] = crch;
   return buffer;
 }
+public String toString() {
+return "MAVLINK_MSG_ID_GLOBAL_POSITION_TIME : " +   "  time="+time+  "  lat="+lat+  "  lon="+lon+  "  alt="+alt+  "  vx="+vx+  "  vy="+vy+  "  vz="+vz+  "  hdg="+hdg;}
 }

@@ -8,8 +8,8 @@ import org.mavlink.IMAVLinkCRC;
 import org.mavlink.MAVLinkCRC;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import org.mavlink.io.LittleEndianDataInputStream;
+import org.mavlink.io.LittleEndianDataOutputStream;
 /**
  * Class msg_rc_channels_override
  * The RAW values of the RC channels sent to the MAV to override info received from the RC radio. A value of UINT16_MAX means no change to that channel. A value of 0 means control of that channel should be released back to the RC radio. The standard PPM modulation is as follows: 1000 microseconds: 0%, 2000 microseconds: 100%. Individual receivers/transmitters might violate this specification.
@@ -67,40 +67,43 @@ public class msg_rc_channels_override extends MAVLinkMessage {
 /**
  * Decode message with raw data
  */
-public void decode(ByteBuffer dis) throws IOException {
-  chan1_raw = (int)dis.getShort()&0x00FFFF;
-  chan2_raw = (int)dis.getShort()&0x00FFFF;
-  chan3_raw = (int)dis.getShort()&0x00FFFF;
-  chan4_raw = (int)dis.getShort()&0x00FFFF;
-  chan5_raw = (int)dis.getShort()&0x00FFFF;
-  chan6_raw = (int)dis.getShort()&0x00FFFF;
-  chan7_raw = (int)dis.getShort()&0x00FFFF;
-  chan8_raw = (int)dis.getShort()&0x00FFFF;
-  target_system = (int)dis.get()&0x00FF;
-  target_component = (int)dis.get()&0x00FF;
+public void decode(LittleEndianDataInputStream dis) throws IOException {
+  chan1_raw = (int)dis.readUnsignedShort()&0x00FFFF;
+  chan2_raw = (int)dis.readUnsignedShort()&0x00FFFF;
+  chan3_raw = (int)dis.readUnsignedShort()&0x00FFFF;
+  chan4_raw = (int)dis.readUnsignedShort()&0x00FFFF;
+  chan5_raw = (int)dis.readUnsignedShort()&0x00FFFF;
+  chan6_raw = (int)dis.readUnsignedShort()&0x00FFFF;
+  chan7_raw = (int)dis.readUnsignedShort()&0x00FFFF;
+  chan8_raw = (int)dis.readUnsignedShort()&0x00FFFF;
+  target_system = (int)dis.readUnsignedByte()&0x00FF;
+  target_component = (int)dis.readUnsignedByte()&0x00FF;
 }
 /**
  * Encode message with raw data and other informations
  */
 public byte[] encode() throws IOException {
   byte[] buffer = new byte[8+18];
-   ByteBuffer dos = ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN);
-  dos.put((byte)0xFE);
-  dos.put((byte)(length & 0x00FF));
-  dos.put((byte)(sequence & 0x00FF));
-  dos.put((byte)(sysId & 0x00FF));
-  dos.put((byte)(componentId & 0x00FF));
-  dos.put((byte)(messageType & 0x00FF));
-  dos.putShort((short)(chan1_raw&0x00FFFF));
-  dos.putShort((short)(chan2_raw&0x00FFFF));
-  dos.putShort((short)(chan3_raw&0x00FFFF));
-  dos.putShort((short)(chan4_raw&0x00FFFF));
-  dos.putShort((short)(chan5_raw&0x00FFFF));
-  dos.putShort((short)(chan6_raw&0x00FFFF));
-  dos.putShort((short)(chan7_raw&0x00FFFF));
-  dos.putShort((short)(chan8_raw&0x00FFFF));
-  dos.put((byte)(target_system&0x00FF));
-  dos.put((byte)(target_component&0x00FF));
+   LittleEndianDataOutputStream dos = new LittleEndianDataOutputStream(new ByteArrayOutputStream());
+  dos.writeByte((byte)0xFE);
+  dos.writeByte(length & 0x00FF);
+  dos.writeByte(sequence & 0x00FF);
+  dos.writeByte(sysId & 0x00FF);
+  dos.writeByte(componentId & 0x00FF);
+  dos.writeByte(messageType & 0x00FF);
+  dos.writeShort(chan1_raw&0x00FFFF);
+  dos.writeShort(chan2_raw&0x00FFFF);
+  dos.writeShort(chan3_raw&0x00FFFF);
+  dos.writeShort(chan4_raw&0x00FFFF);
+  dos.writeShort(chan5_raw&0x00FFFF);
+  dos.writeShort(chan6_raw&0x00FFFF);
+  dos.writeShort(chan7_raw&0x00FFFF);
+  dos.writeShort(chan8_raw&0x00FFFF);
+  dos.writeByte(target_system&0x00FF);
+  dos.writeByte(target_component&0x00FF);
+  dos.flush();
+  byte[] tmp = dos.toByteArray();
+  for (int b=0; b<tmp.length; b++) buffer[b]=tmp[b];
   int crc = MAVLinkCRC.crc_calculate_encode(buffer, 18);
   crc = MAVLinkCRC.crc_accumulate((byte) IMAVLinkCRC.MAVLINK_MESSAGE_CRCS[messageType], crc);
   byte crcl = (byte) (crc & 0x00FF);
@@ -109,4 +112,6 @@ public byte[] encode() throws IOException {
   buffer[25] = crch;
   return buffer;
 }
+public String toString() {
+return "MAVLINK_MSG_ID_RC_CHANNELS_OVERRIDE : " +   "  chan1_raw="+chan1_raw+  "  chan2_raw="+chan2_raw+  "  chan3_raw="+chan3_raw+  "  chan4_raw="+chan4_raw+  "  chan5_raw="+chan5_raw+  "  chan6_raw="+chan6_raw+  "  chan7_raw="+chan7_raw+  "  chan8_raw="+chan8_raw+  "  target_system="+target_system+  "  target_component="+target_component;}
 }

@@ -8,16 +8,16 @@ package org.mavlink.messages;
  * Generate al MAVLink message Id in an interface
  **/
 public interface IMAVLinkMessageID {
-  public static int MAVLINK_MSG_ID_GLOBAL_POSITION_TIME = 126;
+  public static int MAVLINK_MSG_ID_GLOBAL_POSITION_TIME = 127;
   public static int MAVLINK_MSG_ID_HIL_GPS = 113;
   public static int MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA = 54;
   public static int MAVLINK_MSG_ID_LOCAL_POSITION_NED = 32;
   public static int MAVLINK_MSG_ID_ATTITUDE = 30;
   public static int MAVLINK_MSG_ID_BATTERY_STATUS = 147;
   public static int MAVLINK_MSG_ID_MISSION_REQUEST = 40;
+  public static int MAVLINK_MSG_ID_SETPOINT_8DOF = 148;
   public static int MAVLINK_MSG_ID_HEARTBEAT = 0;
   public static int MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT = 62;
-  public static int MAVLINK_MSG_ID_SETPOINT_8DOF = 148;
   public static int MAVLINK_MSG_ID_GPS_INJECT_DATA = 123;
   public static int MAVLINK_MSG_ID_PARAM_SET = 23;
   public static int MAVLINK_MSG_ID_FILE_TRANSFER_DIR_LIST = 111;
@@ -36,6 +36,7 @@ public interface IMAVLinkMessageID {
   public static int MAVLINK_MSG_ID_LOCAL_POSITION_NED_SYSTEM_GLOBAL_OFFSET = 89;
   public static int MAVLINK_MSG_ID_GPS_RAW_INT = 24;
   public static int MAVLINK_MSG_ID_SET_QUAD_MOTORS_SETPOINT = 60;
+  public static int MAVLINK_MSG_ID_ENCAPSULATED_DATA = 131;
   public static int MAVLINK_MSG_ID_SERVO_OUTPUT_RAW = 36;
   public static int MAVLINK_MSG_ID_SCALED_PRESSURE = 29;
   public static int MAVLINK_MSG_ID_MANUAL_SETPOINT = 81;
@@ -68,13 +69,14 @@ public interface IMAVLinkMessageID {
   public static int MAVLINK_MSG_ID_MISSION_REQUEST_PARTIAL_LIST = 37;
   public static int MAVLINK_MSG_ID_COMMAND_LONG = 76;
   public static int MAVLINK_MSG_ID_MANUAL_CONTROL = 69;
+  public static int MAVLINK_MSG_ID_RC_CHANNELS = 65;
   public static int MAVLINK_MSG_ID_GLOBAL_POSITION_INT = 33;
   public static int MAVLINK_MSG_ID_MISSION_ACK = 47;
   public static int MAVLINK_MSG_ID_DEBUG = 254;
   public static int MAVLINK_MSG_ID_LOG_REQUEST_END = 122;
   public static int MAVLINK_MSG_ID_PARAM_REQUEST_READ = 20;
-  public static int MAVLINK_MSG_ID_ATTITUDE_QUATERNION = 31;
   public static int MAVLINK_MSG_ID_SETPOINT_6DOF = 149;
+  public static int MAVLINK_MSG_ID_ATTITUDE_QUATERNION = 31;
   public static int MAVLINK_MSG_ID_GLOBAL_POSITION_SETPOINT_INT = 52;
   public static int MAVLINK_MSG_ID_HIL_RC_INPUTS_RAW = 92;
   public static int MAVLINK_MSG_ID_SET_GLOBAL_POSITION_SETPOINT_INT = 53;
@@ -96,6 +98,7 @@ public interface IMAVLinkMessageID {
   public static int MAVLINK_MSG_ID_SYSTEM_TIME = 2;
   public static int MAVLINK_MSG_ID_HIL_STATE_QUATERNION = 115;
   public static int MAVLINK_MSG_ID_HIL_OPTICAL_FLOW = 114;
+  public static int MAVLINK_MSG_ID_SERIAL_CONTROL = 126;
   public static int MAVLINK_MSG_ID_MISSION_CURRENT = 42;
   public static int MAVLINK_MSG_ID_SET_ROLL_PITCH_YAW_THRUST = 56;
   public static int MAVLINK_MSG_ID_MISSION_COUNT = 44;
@@ -110,4 +113,5 @@ public interface IMAVLinkMessageID {
   public static int MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT = 58;
   public static int MAVLINK_MSG_ID_REQUEST_DATA_STREAM = 66;
   public static int MAVLINK_MSG_ID_VICON_POSITION_ESTIMATE = 104;
+  public static int MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE = 130;
 }

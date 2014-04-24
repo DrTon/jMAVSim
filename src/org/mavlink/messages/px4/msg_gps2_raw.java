@@ -8,8 +8,8 @@ import org.mavlink.IMAVLinkCRC;
 import org.mavlink.MAVLinkCRC;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import org.mavlink.io.LittleEndianDataInputStream;
+import org.mavlink.io.LittleEndianDataOutputStream;
 /**
  * Class msg_gps2_raw
  * Second GPS data. Coordinate frame is right-handed, Z-axis up (GPS frame).
@@ -75,44 +75,47 @@ public class msg_gps2_raw extends MAVLinkMessage {
 /**
  * Decode message with raw data
  */
-public void decode(ByteBuffer dis) throws IOException {
-  time_usec = (long)dis.getLong();
-  lat = (int)dis.getInt();
-  lon = (int)dis.getInt();
-  alt = (int)dis.getInt();
-  dgps_age = (int)dis.getInt()&0x00FFFFFFFF;
-  eph = (int)dis.getShort()&0x00FFFF;
-  epv = (int)dis.getShort()&0x00FFFF;
-  vel = (int)dis.getShort()&0x00FFFF;
-  cog = (int)dis.getShort()&0x00FFFF;
-  fix_type = (int)dis.get()&0x00FF;
-  satellites_visible = (int)dis.get()&0x00FF;
-  dgps_numch = (int)dis.get()&0x00FF;
+public void decode(LittleEndianDataInputStream dis) throws IOException {
+  time_usec = (long)dis.readLong();
+  lat = (int)dis.readInt();
+  lon = (int)dis.readInt();
+  alt = (int)dis.readInt();
+  dgps_age = (int)dis.readInt()&0x00FFFFFFFF;
+  eph = (int)dis.readUnsignedShort()&0x00FFFF;
+  epv = (int)dis.readUnsignedShort()&0x00FFFF;
+  vel = (int)dis.readUnsignedShort()&0x00FFFF;
+  cog = (int)dis.readUnsignedShort()&0x00FFFF;
+  fix_type = (int)dis.readUnsignedByte()&0x00FF;
+  satellites_visible = (int)dis.readUnsignedByte()&0x00FF;
+  dgps_numch = (int)dis.readUnsignedByte()&0x00FF;
 }
 /**
  * Encode message with raw data and other informations
  */
 public byte[] encode() throws IOException {
   byte[] buffer = new byte[8+35];
-   ByteBuffer dos = ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN);
-  dos.put((byte)0xFE);
-  dos.put((byte)(length & 0x00FF));
-  dos.put((byte)(sequence & 0x00FF));
-  dos.put((byte)(sysId & 0x00FF));
-  dos.put((byte)(componentId & 0x00FF));
-  dos.put((byte)(messageType & 0x00FF));
-  dos.putLong(time_usec);
-  dos.putInt((int)(lat&0x00FFFFFFFF));
-  dos.putInt((int)(lon&0x00FFFFFFFF));
-  dos.putInt((int)(alt&0x00FFFFFFFF));
-  dos.putInt((int)(dgps_age&0x00FFFFFFFF));
-  dos.putShort((short)(eph&0x00FFFF));
-  dos.putShort((short)(epv&0x00FFFF));
-  dos.putShort((short)(vel&0x00FFFF));
-  dos.putShort((short)(cog&0x00FFFF));
-  dos.put((byte)(fix_type&0x00FF));
-  dos.put((byte)(satellites_visible&0x00FF));
-  dos.put((byte)(dgps_numch&0x00FF));
+   LittleEndianDataOutputStream dos = new LittleEndianDataOutputStream(new ByteArrayOutputStream());
+  dos.writeByte((byte)0xFE);
+  dos.writeByte(length & 0x00FF);
+  dos.writeByte(sequence & 0x00FF);
+  dos.writeByte(sysId & 0x00FF);
+  dos.writeByte(componentId & 0x00FF);
+  dos.writeByte(messageType & 0x00FF);
+  dos.writeLong(time_usec);
+  dos.writeInt((int)(lat&0x00FFFFFFFF));
+  dos.writeInt((int)(lon&0x00FFFFFFFF));
+  dos.writeInt((int)(alt&0x00FFFFFFFF));
+  dos.writeInt((int)(dgps_age&0x00FFFFFFFF));
+  dos.writeShort(eph&0x00FFFF);
+  dos.writeShort(epv&0x00FFFF);
+  dos.writeShort(vel&0x00FFFF);
+  dos.writeShort(cog&0x00FFFF);
+  dos.writeByte(fix_type&0x00FF);
+  dos.writeByte(satellites_visible&0x00FF);
+  dos.writeByte(dgps_numch&0x00FF);
+  dos.flush();
+  byte[] tmp = dos.toByteArray();
+  for (int b=0; b<tmp.length; b++) buffer[b]=tmp[b];
   int crc = MAVLinkCRC.crc_calculate_encode(buffer, 35);
   crc = MAVLinkCRC.crc_accumulate((byte) IMAVLinkCRC.MAVLINK_MESSAGE_CRCS[messageType], crc);
   byte crcl = (byte) (crc & 0x00FF);
@@ -121,4 +124,6 @@ public byte[] encode() throws IOException {
   buffer[42] = crch;
   return buffer;
 }
+public String toString() {
+return "MAVLINK_MSG_ID_GPS2_RAW : " +   "  time_usec="+time_usec+  "  lat="+lat+  "  lon="+lon+  "  alt="+alt+  "  dgps_age="+dgps_age+  "  eph="+eph+  "  epv="+epv+  "  vel="+vel+  "  cog="+cog+  "  fix_type="+fix_type+  "  satellites_visible="+satellites_visible+  "  dgps_numch="+dgps_numch;}
 }

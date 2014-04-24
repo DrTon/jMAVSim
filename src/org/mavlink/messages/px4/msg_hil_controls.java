@@ -8,8 +8,8 @@ import org.mavlink.IMAVLinkCRC;
 import org.mavlink.MAVLinkCRC;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import org.mavlink.io.LittleEndianDataInputStream;
+import org.mavlink.io.LittleEndianDataOutputStream;
 /**
  * Class msg_hil_controls
  * Sent from autopilot to simulation. Hardware in the loop control outputs
@@ -71,42 +71,45 @@ public class msg_hil_controls extends MAVLinkMessage {
 /**
  * Decode message with raw data
  */
-public void decode(ByteBuffer dis) throws IOException {
-  time_usec = (long)dis.getLong();
-  roll_ailerons = (float)dis.getFloat();
-  pitch_elevator = (float)dis.getFloat();
-  yaw_rudder = (float)dis.getFloat();
-  throttle = (float)dis.getFloat();
-  aux1 = (float)dis.getFloat();
-  aux2 = (float)dis.getFloat();
-  aux3 = (float)dis.getFloat();
-  aux4 = (float)dis.getFloat();
-  mode = (int)dis.get()&0x00FF;
-  nav_mode = (int)dis.get()&0x00FF;
+public void decode(LittleEndianDataInputStream dis) throws IOException {
+  time_usec = (long)dis.readLong();
+  roll_ailerons = (float)dis.readFloat();
+  pitch_elevator = (float)dis.readFloat();
+  yaw_rudder = (float)dis.readFloat();
+  throttle = (float)dis.readFloat();
+  aux1 = (float)dis.readFloat();
+  aux2 = (float)dis.readFloat();
+  aux3 = (float)dis.readFloat();
+  aux4 = (float)dis.readFloat();
+  mode = (int)dis.readUnsignedByte()&0x00FF;
+  nav_mode = (int)dis.readUnsignedByte()&0x00FF;
 }
 /**
  * Encode message with raw data and other informations
  */
 public byte[] encode() throws IOException {
   byte[] buffer = new byte[8+42];
-   ByteBuffer dos = ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN);
-  dos.put((byte)0xFE);
-  dos.put((byte)(length & 0x00FF));
-  dos.put((byte)(sequence & 0x00FF));
-  dos.put((byte)(sysId & 0x00FF));
-  dos.put((byte)(componentId & 0x00FF));
-  dos.put((byte)(messageType & 0x00FF));
-  dos.putLong(time_usec);
-  dos.putFloat(roll_ailerons);
-  dos.putFloat(pitch_elevator);
-  dos.putFloat(yaw_rudder);
-  dos.putFloat(throttle);
-  dos.putFloat(aux1);
-  dos.putFloat(aux2);
-  dos.putFloat(aux3);
-  dos.putFloat(aux4);
-  dos.put((byte)(mode&0x00FF));
-  dos.put((byte)(nav_mode&0x00FF));
+   LittleEndianDataOutputStream dos = new LittleEndianDataOutputStream(new ByteArrayOutputStream());
+  dos.writeByte((byte)0xFE);
+  dos.writeByte(length & 0x00FF);
+  dos.writeByte(sequence & 0x00FF);
+  dos.writeByte(sysId & 0x00FF);
+  dos.writeByte(componentId & 0x00FF);
+  dos.writeByte(messageType & 0x00FF);
+  dos.writeLong(time_usec);
+  dos.writeFloat(roll_ailerons);
+  dos.writeFloat(pitch_elevator);
+  dos.writeFloat(yaw_rudder);
+  dos.writeFloat(throttle);
+  dos.writeFloat(aux1);
+  dos.writeFloat(aux2);
+  dos.writeFloat(aux3);
+  dos.writeFloat(aux4);
+  dos.writeByte(mode&0x00FF);
+  dos.writeByte(nav_mode&0x00FF);
+  dos.flush();
+  byte[] tmp = dos.toByteArray();
+  for (int b=0; b<tmp.length; b++) buffer[b]=tmp[b];
   int crc = MAVLinkCRC.crc_calculate_encode(buffer, 42);
   crc = MAVLinkCRC.crc_accumulate((byte) IMAVLinkCRC.MAVLINK_MESSAGE_CRCS[messageType], crc);
   byte crcl = (byte) (crc & 0x00FF);
@@ -115,4 +118,6 @@ public byte[] encode() throws IOException {
   buffer[49] = crch;
   return buffer;
 }
+public String toString() {
+return "MAVLINK_MSG_ID_HIL_CONTROLS : " +   "  time_usec="+time_usec+  "  roll_ailerons="+roll_ailerons+  "  pitch_elevator="+pitch_elevator+  "  yaw_rudder="+yaw_rudder+  "  throttle="+throttle+  "  aux1="+aux1+  "  aux2="+aux2+  "  aux3="+aux3+  "  aux4="+aux4+  "  mode="+mode+  "  nav_mode="+nav_mode;}
 }

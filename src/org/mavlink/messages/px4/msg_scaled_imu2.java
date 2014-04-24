@@ -8,8 +8,8 @@ import org.mavlink.IMAVLinkCRC;
 import org.mavlink.MAVLinkCRC;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import org.mavlink.io.LittleEndianDataInputStream;
+import org.mavlink.io.LittleEndianDataOutputStream;
 /**
  * Class msg_scaled_imu2
  * The RAW IMU readings for secondary 9DOF sensor setup. This message should contain the scaled values to the described units
@@ -67,40 +67,43 @@ public class msg_scaled_imu2 extends MAVLinkMessage {
 /**
  * Decode message with raw data
  */
-public void decode(ByteBuffer dis) throws IOException {
-  time_boot_ms = (int)dis.getInt()&0x00FFFFFFFF;
-  xacc = (int)dis.getShort();
-  yacc = (int)dis.getShort();
-  zacc = (int)dis.getShort();
-  xgyro = (int)dis.getShort();
-  ygyro = (int)dis.getShort();
-  zgyro = (int)dis.getShort();
-  xmag = (int)dis.getShort();
-  ymag = (int)dis.getShort();
-  zmag = (int)dis.getShort();
+public void decode(LittleEndianDataInputStream dis) throws IOException {
+  time_boot_ms = (int)dis.readInt()&0x00FFFFFFFF;
+  xacc = (int)dis.readShort();
+  yacc = (int)dis.readShort();
+  zacc = (int)dis.readShort();
+  xgyro = (int)dis.readShort();
+  ygyro = (int)dis.readShort();
+  zgyro = (int)dis.readShort();
+  xmag = (int)dis.readShort();
+  ymag = (int)dis.readShort();
+  zmag = (int)dis.readShort();
 }
 /**
  * Encode message with raw data and other informations
  */
 public byte[] encode() throws IOException {
   byte[] buffer = new byte[8+22];
-   ByteBuffer dos = ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN);
-  dos.put((byte)0xFE);
-  dos.put((byte)(length & 0x00FF));
-  dos.put((byte)(sequence & 0x00FF));
-  dos.put((byte)(sysId & 0x00FF));
-  dos.put((byte)(componentId & 0x00FF));
-  dos.put((byte)(messageType & 0x00FF));
-  dos.putInt((int)(time_boot_ms&0x00FFFFFFFF));
-  dos.putShort((short)(xacc&0x00FFFF));
-  dos.putShort((short)(yacc&0x00FFFF));
-  dos.putShort((short)(zacc&0x00FFFF));
-  dos.putShort((short)(xgyro&0x00FFFF));
-  dos.putShort((short)(ygyro&0x00FFFF));
-  dos.putShort((short)(zgyro&0x00FFFF));
-  dos.putShort((short)(xmag&0x00FFFF));
-  dos.putShort((short)(ymag&0x00FFFF));
-  dos.putShort((short)(zmag&0x00FFFF));
+   LittleEndianDataOutputStream dos = new LittleEndianDataOutputStream(new ByteArrayOutputStream());
+  dos.writeByte((byte)0xFE);
+  dos.writeByte(length & 0x00FF);
+  dos.writeByte(sequence & 0x00FF);
+  dos.writeByte(sysId & 0x00FF);
+  dos.writeByte(componentId & 0x00FF);
+  dos.writeByte(messageType & 0x00FF);
+  dos.writeInt((int)(time_boot_ms&0x00FFFFFFFF));
+  dos.writeShort(xacc&0x00FFFF);
+  dos.writeShort(yacc&0x00FFFF);
+  dos.writeShort(zacc&0x00FFFF);
+  dos.writeShort(xgyro&0x00FFFF);
+  dos.writeShort(ygyro&0x00FFFF);
+  dos.writeShort(zgyro&0x00FFFF);
+  dos.writeShort(xmag&0x00FFFF);
+  dos.writeShort(ymag&0x00FFFF);
+  dos.writeShort(zmag&0x00FFFF);
+  dos.flush();
+  byte[] tmp = dos.toByteArray();
+  for (int b=0; b<tmp.length; b++) buffer[b]=tmp[b];
   int crc = MAVLinkCRC.crc_calculate_encode(buffer, 22);
   crc = MAVLinkCRC.crc_accumulate((byte) IMAVLinkCRC.MAVLINK_MESSAGE_CRCS[messageType], crc);
   byte crcl = (byte) (crc & 0x00FF);
@@ -109,4 +112,6 @@ public byte[] encode() throws IOException {
   buffer[29] = crch;
   return buffer;
 }
+public String toString() {
+return "MAVLINK_MSG_ID_SCALED_IMU2 : " +   "  time_boot_ms="+time_boot_ms+  "  xacc="+xacc+  "  yacc="+yacc+  "  zacc="+zacc+  "  xgyro="+xgyro+  "  ygyro="+ygyro+  "  zgyro="+zgyro+  "  xmag="+xmag+  "  ymag="+ymag+  "  zmag="+zmag;}
 }

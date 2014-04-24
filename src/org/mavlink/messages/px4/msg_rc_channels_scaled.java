@@ -8,8 +8,8 @@ import org.mavlink.IMAVLinkCRC;
 import org.mavlink.MAVLinkCRC;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import org.mavlink.io.LittleEndianDataInputStream;
+import org.mavlink.io.LittleEndianDataOutputStream;
 /**
  * Class msg_rc_channels_scaled
  * The scaled values of the RC channels received. (-100%) -10000, (0%) 0, (100%) 10000. Channels that are inactive should be set to UINT16_MAX.
@@ -71,42 +71,45 @@ public class msg_rc_channels_scaled extends MAVLinkMessage {
 /**
  * Decode message with raw data
  */
-public void decode(ByteBuffer dis) throws IOException {
-  time_boot_ms = (int)dis.getInt()&0x00FFFFFFFF;
-  chan1_scaled = (int)dis.getShort();
-  chan2_scaled = (int)dis.getShort();
-  chan3_scaled = (int)dis.getShort();
-  chan4_scaled = (int)dis.getShort();
-  chan5_scaled = (int)dis.getShort();
-  chan6_scaled = (int)dis.getShort();
-  chan7_scaled = (int)dis.getShort();
-  chan8_scaled = (int)dis.getShort();
-  port = (int)dis.get()&0x00FF;
-  rssi = (int)dis.get()&0x00FF;
+public void decode(LittleEndianDataInputStream dis) throws IOException {
+  time_boot_ms = (int)dis.readInt()&0x00FFFFFFFF;
+  chan1_scaled = (int)dis.readShort();
+  chan2_scaled = (int)dis.readShort();
+  chan3_scaled = (int)dis.readShort();
+  chan4_scaled = (int)dis.readShort();
+  chan5_scaled = (int)dis.readShort();
+  chan6_scaled = (int)dis.readShort();
+  chan7_scaled = (int)dis.readShort();
+  chan8_scaled = (int)dis.readShort();
+  port = (int)dis.readUnsignedByte()&0x00FF;
+  rssi = (int)dis.readUnsignedByte()&0x00FF;
 }
 /**
  * Encode message with raw data and other informations
  */
 public byte[] encode() throws IOException {
   byte[] buffer = new byte[8+22];
-   ByteBuffer dos = ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN);
-  dos.put((byte)0xFE);
-  dos.put((byte)(length & 0x00FF));
-  dos.put((byte)(sequence & 0x00FF));
-  dos.put((byte)(sysId & 0x00FF));
-  dos.put((byte)(componentId & 0x00FF));
-  dos.put((byte)(messageType & 0x00FF));
-  dos.putInt((int)(time_boot_ms&0x00FFFFFFFF));
-  dos.putShort((short)(chan1_scaled&0x00FFFF));
-  dos.putShort((short)(chan2_scaled&0x00FFFF));
-  dos.putShort((short)(chan3_scaled&0x00FFFF));
-  dos.putShort((short)(chan4_scaled&0x00FFFF));
-  dos.putShort((short)(chan5_scaled&0x00FFFF));
-  dos.putShort((short)(chan6_scaled&0x00FFFF));
-  dos.putShort((short)(chan7_scaled&0x00FFFF));
-  dos.putShort((short)(chan8_scaled&0x00FFFF));
-  dos.put((byte)(port&0x00FF));
-  dos.put((byte)(rssi&0x00FF));
+   LittleEndianDataOutputStream dos = new LittleEndianDataOutputStream(new ByteArrayOutputStream());
+  dos.writeByte((byte)0xFE);
+  dos.writeByte(length & 0x00FF);
+  dos.writeByte(sequence & 0x00FF);
+  dos.writeByte(sysId & 0x00FF);
+  dos.writeByte(componentId & 0x00FF);
+  dos.writeByte(messageType & 0x00FF);
+  dos.writeInt((int)(time_boot_ms&0x00FFFFFFFF));
+  dos.writeShort(chan1_scaled&0x00FFFF);
+  dos.writeShort(chan2_scaled&0x00FFFF);
+  dos.writeShort(chan3_scaled&0x00FFFF);
+  dos.writeShort(chan4_scaled&0x00FFFF);
+  dos.writeShort(chan5_scaled&0x00FFFF);
+  dos.writeShort(chan6_scaled&0x00FFFF);
+  dos.writeShort(chan7_scaled&0x00FFFF);
+  dos.writeShort(chan8_scaled&0x00FFFF);
+  dos.writeByte(port&0x00FF);
+  dos.writeByte(rssi&0x00FF);
+  dos.flush();
+  byte[] tmp = dos.toByteArray();
+  for (int b=0; b<tmp.length; b++) buffer[b]=tmp[b];
   int crc = MAVLinkCRC.crc_calculate_encode(buffer, 22);
   crc = MAVLinkCRC.crc_accumulate((byte) IMAVLinkCRC.MAVLINK_MESSAGE_CRCS[messageType], crc);
   byte crcl = (byte) (crc & 0x00FF);
@@ -115,4 +118,6 @@ public byte[] encode() throws IOException {
   buffer[29] = crch;
   return buffer;
 }
+public String toString() {
+return "MAVLINK_MSG_ID_RC_CHANNELS_SCALED : " +   "  time_boot_ms="+time_boot_ms+  "  chan1_scaled="+chan1_scaled+  "  chan2_scaled="+chan2_scaled+  "  chan3_scaled="+chan3_scaled+  "  chan4_scaled="+chan4_scaled+  "  chan5_scaled="+chan5_scaled+  "  chan6_scaled="+chan6_scaled+  "  chan7_scaled="+chan7_scaled+  "  chan8_scaled="+chan8_scaled+  "  port="+port+  "  rssi="+rssi;}
 }

@@ -8,8 +8,8 @@ import org.mavlink.IMAVLinkCRC;
 import org.mavlink.MAVLinkCRC;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import org.mavlink.io.LittleEndianDataInputStream;
+import org.mavlink.io.LittleEndianDataOutputStream;
 /**
  * Class msg_attitude
  * The attitude in the aeronautical frame (right-handed, Z-down, X-front, Y-right).
@@ -55,34 +55,37 @@ public class msg_attitude extends MAVLinkMessage {
 /**
  * Decode message with raw data
  */
-public void decode(ByteBuffer dis) throws IOException {
-  time_boot_ms = (int)dis.getInt()&0x00FFFFFFFF;
-  roll = (float)dis.getFloat();
-  pitch = (float)dis.getFloat();
-  yaw = (float)dis.getFloat();
-  rollspeed = (float)dis.getFloat();
-  pitchspeed = (float)dis.getFloat();
-  yawspeed = (float)dis.getFloat();
+public void decode(LittleEndianDataInputStream dis) throws IOException {
+  time_boot_ms = (int)dis.readInt()&0x00FFFFFFFF;
+  roll = (float)dis.readFloat();
+  pitch = (float)dis.readFloat();
+  yaw = (float)dis.readFloat();
+  rollspeed = (float)dis.readFloat();
+  pitchspeed = (float)dis.readFloat();
+  yawspeed = (float)dis.readFloat();
 }
 /**
  * Encode message with raw data and other informations
  */
 public byte[] encode() throws IOException {
   byte[] buffer = new byte[8+28];
-   ByteBuffer dos = ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN);
-  dos.put((byte)0xFE);
-  dos.put((byte)(length & 0x00FF));
-  dos.put((byte)(sequence & 0x00FF));
-  dos.put((byte)(sysId & 0x00FF));
-  dos.put((byte)(componentId & 0x00FF));
-  dos.put((byte)(messageType & 0x00FF));
-  dos.putInt((int)(time_boot_ms&0x00FFFFFFFF));
-  dos.putFloat(roll);
-  dos.putFloat(pitch);
-  dos.putFloat(yaw);
-  dos.putFloat(rollspeed);
-  dos.putFloat(pitchspeed);
-  dos.putFloat(yawspeed);
+   LittleEndianDataOutputStream dos = new LittleEndianDataOutputStream(new ByteArrayOutputStream());
+  dos.writeByte((byte)0xFE);
+  dos.writeByte(length & 0x00FF);
+  dos.writeByte(sequence & 0x00FF);
+  dos.writeByte(sysId & 0x00FF);
+  dos.writeByte(componentId & 0x00FF);
+  dos.writeByte(messageType & 0x00FF);
+  dos.writeInt((int)(time_boot_ms&0x00FFFFFFFF));
+  dos.writeFloat(roll);
+  dos.writeFloat(pitch);
+  dos.writeFloat(yaw);
+  dos.writeFloat(rollspeed);
+  dos.writeFloat(pitchspeed);
+  dos.writeFloat(yawspeed);
+  dos.flush();
+  byte[] tmp = dos.toByteArray();
+  for (int b=0; b<tmp.length; b++) buffer[b]=tmp[b];
   int crc = MAVLinkCRC.crc_calculate_encode(buffer, 28);
   crc = MAVLinkCRC.crc_accumulate((byte) IMAVLinkCRC.MAVLINK_MESSAGE_CRCS[messageType], crc);
   byte crcl = (byte) (crc & 0x00FF);
@@ -91,4 +94,6 @@ public byte[] encode() throws IOException {
   buffer[35] = crch;
   return buffer;
 }
+public String toString() {
+return "MAVLINK_MSG_ID_ATTITUDE : " +   "  time_boot_ms="+time_boot_ms+  "  roll="+roll+  "  pitch="+pitch+  "  yaw="+yaw+  "  rollspeed="+rollspeed+  "  pitchspeed="+pitchspeed+  "  yawspeed="+yawspeed;}
 }

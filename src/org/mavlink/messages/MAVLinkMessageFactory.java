@@ -6,17 +6,17 @@ package org.mavlink.messages;
 import org.mavlink.messages.MAVLinkMessage;
 import org.mavlink.IMAVLinkMessage;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import org.mavlink.io.LittleEndianDataInputStream;
+import java.io.ByteArrayInputStream;
 import org.mavlink.messages.px4.msg_hil_gps;
 import org.mavlink.messages.px4.msg_safety_set_allowed_area;
 import org.mavlink.messages.px4.msg_local_position_ned;
 import org.mavlink.messages.px4.msg_attitude;
 import org.mavlink.messages.px4.msg_battery_status;
 import org.mavlink.messages.px4.msg_mission_request;
+import org.mavlink.messages.px4.msg_setpoint_8dof;
 import org.mavlink.messages.px4.msg_heartbeat;
 import org.mavlink.messages.px4.msg_nav_controller_output;
-import org.mavlink.messages.px4.msg_setpoint_8dof;
 import org.mavlink.messages.px4.msg_gps_inject_data;
 import org.mavlink.messages.px4.msg_param_set;
 import org.mavlink.messages.px4.msg_file_transfer_dir_list;
@@ -35,6 +35,7 @@ import org.mavlink.messages.px4.msg_hil_controls;
 import org.mavlink.messages.px4.msg_local_position_ned_system_global_offset;
 import org.mavlink.messages.px4.msg_gps_raw_int;
 import org.mavlink.messages.px4.msg_set_quad_motors_setpoint;
+import org.mavlink.messages.px4.msg_encapsulated_data;
 import org.mavlink.messages.px4.msg_servo_output_raw;
 import org.mavlink.messages.px4.msg_scaled_pressure;
 import org.mavlink.messages.px4.msg_manual_setpoint;
@@ -67,13 +68,14 @@ import org.mavlink.messages.px4.msg_scaled_imu2;
 import org.mavlink.messages.px4.msg_mission_request_partial_list;
 import org.mavlink.messages.px4.msg_command_long;
 import org.mavlink.messages.px4.msg_manual_control;
+import org.mavlink.messages.px4.msg_rc_channels;
 import org.mavlink.messages.px4.msg_global_position_int;
 import org.mavlink.messages.px4.msg_mission_ack;
 import org.mavlink.messages.px4.msg_debug;
 import org.mavlink.messages.px4.msg_log_request_end;
 import org.mavlink.messages.px4.msg_param_request_read;
-import org.mavlink.messages.px4.msg_attitude_quaternion;
 import org.mavlink.messages.px4.msg_setpoint_6dof;
+import org.mavlink.messages.px4.msg_attitude_quaternion;
 import org.mavlink.messages.px4.msg_global_position_setpoint_int;
 import org.mavlink.messages.px4.msg_hil_rc_inputs_raw;
 import org.mavlink.messages.px4.msg_set_global_position_setpoint_int;
@@ -95,6 +97,7 @@ import org.mavlink.messages.px4.msg_vision_position_estimate;
 import org.mavlink.messages.px4.msg_system_time;
 import org.mavlink.messages.px4.msg_hil_state_quaternion;
 import org.mavlink.messages.px4.msg_hil_optical_flow;
+import org.mavlink.messages.px4.msg_serial_control;
 import org.mavlink.messages.px4.msg_mission_current;
 import org.mavlink.messages.px4.msg_set_roll_pitch_yaw_thrust;
 import org.mavlink.messages.px4.msg_mission_count;
@@ -109,6 +112,7 @@ import org.mavlink.messages.px4.msg_memory_vect;
 import org.mavlink.messages.px4.msg_roll_pitch_yaw_thrust_setpoint;
 import org.mavlink.messages.px4.msg_request_data_stream;
 import org.mavlink.messages.px4.msg_vicon_position_estimate;
+import org.mavlink.messages.px4.msg_data_transmission_handshake;
 import org.mavlink.messages.px4.msg_global_position_time;
 import org.mavlink.messages.px4.msg_hil_gps;
 import org.mavlink.messages.px4.msg_safety_set_allowed_area;
@@ -116,9 +120,9 @@ import org.mavlink.messages.px4.msg_local_position_ned;
 import org.mavlink.messages.px4.msg_attitude;
 import org.mavlink.messages.px4.msg_battery_status;
 import org.mavlink.messages.px4.msg_mission_request;
+import org.mavlink.messages.px4.msg_setpoint_8dof;
 import org.mavlink.messages.px4.msg_heartbeat;
 import org.mavlink.messages.px4.msg_nav_controller_output;
-import org.mavlink.messages.px4.msg_setpoint_8dof;
 import org.mavlink.messages.px4.msg_gps_inject_data;
 import org.mavlink.messages.px4.msg_param_set;
 import org.mavlink.messages.px4.msg_file_transfer_dir_list;
@@ -137,6 +141,7 @@ import org.mavlink.messages.px4.msg_hil_controls;
 import org.mavlink.messages.px4.msg_local_position_ned_system_global_offset;
 import org.mavlink.messages.px4.msg_gps_raw_int;
 import org.mavlink.messages.px4.msg_set_quad_motors_setpoint;
+import org.mavlink.messages.px4.msg_encapsulated_data;
 import org.mavlink.messages.px4.msg_servo_output_raw;
 import org.mavlink.messages.px4.msg_scaled_pressure;
 import org.mavlink.messages.px4.msg_manual_setpoint;
@@ -169,13 +174,14 @@ import org.mavlink.messages.px4.msg_scaled_imu2;
 import org.mavlink.messages.px4.msg_mission_request_partial_list;
 import org.mavlink.messages.px4.msg_command_long;
 import org.mavlink.messages.px4.msg_manual_control;
+import org.mavlink.messages.px4.msg_rc_channels;
 import org.mavlink.messages.px4.msg_global_position_int;
 import org.mavlink.messages.px4.msg_mission_ack;
 import org.mavlink.messages.px4.msg_debug;
 import org.mavlink.messages.px4.msg_log_request_end;
 import org.mavlink.messages.px4.msg_param_request_read;
-import org.mavlink.messages.px4.msg_attitude_quaternion;
 import org.mavlink.messages.px4.msg_setpoint_6dof;
+import org.mavlink.messages.px4.msg_attitude_quaternion;
 import org.mavlink.messages.px4.msg_global_position_setpoint_int;
 import org.mavlink.messages.px4.msg_hil_rc_inputs_raw;
 import org.mavlink.messages.px4.msg_set_global_position_setpoint_int;
@@ -197,6 +203,7 @@ import org.mavlink.messages.px4.msg_vision_position_estimate;
 import org.mavlink.messages.px4.msg_system_time;
 import org.mavlink.messages.px4.msg_hil_state_quaternion;
 import org.mavlink.messages.px4.msg_hil_optical_flow;
+import org.mavlink.messages.px4.msg_serial_control;
 import org.mavlink.messages.px4.msg_mission_current;
 import org.mavlink.messages.px4.msg_set_roll_pitch_yaw_thrust;
 import org.mavlink.messages.px4.msg_mission_count;
@@ -211,6 +218,7 @@ import org.mavlink.messages.px4.msg_memory_vect;
 import org.mavlink.messages.px4.msg_roll_pitch_yaw_thrust_setpoint;
 import org.mavlink.messages.px4.msg_request_data_stream;
 import org.mavlink.messages.px4.msg_vicon_position_estimate;
+import org.mavlink.messages.px4.msg_data_transmission_handshake;
 /**
  * Class MAVLinkMessageFactory
  * Generate MAVLink message classes from byte array
@@ -218,7 +226,7 @@ import org.mavlink.messages.px4.msg_vicon_position_estimate;
 public class MAVLinkMessageFactory implements IMAVLinkMessage, IMAVLinkMessageID {
 public static MAVLinkMessage getMessage(int msgid, int sysId, int componentId, byte[] rawData) throws IOException {
     MAVLinkMessage msg=null;
-    ByteBuffer dis = ByteBuffer.wrap(rawData).order(ByteOrder.LITTLE_ENDIAN);
+    LittleEndianDataInputStream dis = new LittleEndianDataInputStream(new ByteArrayInputStream(rawData));
     switch(msgid) {
   case MAVLINK_MSG_ID_GLOBAL_POSITION_TIME:
       msg = new msg_global_position_time(sysId, componentId);
@@ -248,16 +256,16 @@ public static MAVLinkMessage getMessage(int msgid, int sysId, int componentId, b
       msg = new msg_mission_request(sysId, componentId);
       msg.decode(dis);
       break;
+  case MAVLINK_MSG_ID_SETPOINT_8DOF:
+      msg = new msg_setpoint_8dof(sysId, componentId);
+      msg.decode(dis);
+      break;
   case MAVLINK_MSG_ID_HEARTBEAT:
       msg = new msg_heartbeat(sysId, componentId);
       msg.decode(dis);
       break;
   case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
       msg = new msg_nav_controller_output(sysId, componentId);
-      msg.decode(dis);
-      break;
-  case MAVLINK_MSG_ID_SETPOINT_8DOF:
-      msg = new msg_setpoint_8dof(sysId, componentId);
       msg.decode(dis);
       break;
   case MAVLINK_MSG_ID_GPS_INJECT_DATA:
@@ -330,6 +338,10 @@ public static MAVLinkMessage getMessage(int msgid, int sysId, int componentId, b
       break;
   case MAVLINK_MSG_ID_SET_QUAD_MOTORS_SETPOINT:
       msg = new msg_set_quad_motors_setpoint(sysId, componentId);
+      msg.decode(dis);
+      break;
+  case MAVLINK_MSG_ID_ENCAPSULATED_DATA:
+      msg = new msg_encapsulated_data(sysId, componentId);
       msg.decode(dis);
       break;
   case MAVLINK_MSG_ID_SERVO_OUTPUT_RAW:
@@ -460,6 +472,10 @@ public static MAVLinkMessage getMessage(int msgid, int sysId, int componentId, b
       msg = new msg_manual_control(sysId, componentId);
       msg.decode(dis);
       break;
+  case MAVLINK_MSG_ID_RC_CHANNELS:
+      msg = new msg_rc_channels(sysId, componentId);
+      msg.decode(dis);
+      break;
   case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
       msg = new msg_global_position_int(sysId, componentId);
       msg.decode(dis);
@@ -480,12 +496,12 @@ public static MAVLinkMessage getMessage(int msgid, int sysId, int componentId, b
       msg = new msg_param_request_read(sysId, componentId);
       msg.decode(dis);
       break;
-  case MAVLINK_MSG_ID_ATTITUDE_QUATERNION:
-      msg = new msg_attitude_quaternion(sysId, componentId);
-      msg.decode(dis);
-      break;
   case MAVLINK_MSG_ID_SETPOINT_6DOF:
       msg = new msg_setpoint_6dof(sysId, componentId);
+      msg.decode(dis);
+      break;
+  case MAVLINK_MSG_ID_ATTITUDE_QUATERNION:
+      msg = new msg_attitude_quaternion(sysId, componentId);
       msg.decode(dis);
       break;
   case MAVLINK_MSG_ID_GLOBAL_POSITION_SETPOINT_INT:
@@ -572,6 +588,10 @@ public static MAVLinkMessage getMessage(int msgid, int sysId, int componentId, b
       msg = new msg_hil_optical_flow(sysId, componentId);
       msg.decode(dis);
       break;
+  case MAVLINK_MSG_ID_SERIAL_CONTROL:
+      msg = new msg_serial_control(sysId, componentId);
+      msg.decode(dis);
+      break;
   case MAVLINK_MSG_ID_MISSION_CURRENT:
       msg = new msg_mission_current(sysId, componentId);
       msg.decode(dis);
@@ -626,6 +646,10 @@ public static MAVLinkMessage getMessage(int msgid, int sysId, int componentId, b
       break;
   case MAVLINK_MSG_ID_VICON_POSITION_ESTIMATE:
       msg = new msg_vicon_position_estimate(sysId, componentId);
+      msg.decode(dis);
+      break;
+  case MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE:
+      msg = new msg_data_transmission_handshake(sysId, componentId);
       msg.decode(dis);
       break;
   default:

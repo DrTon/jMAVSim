@@ -8,8 +8,8 @@ import org.mavlink.IMAVLinkCRC;
 import org.mavlink.MAVLinkCRC;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import org.mavlink.io.LittleEndianDataInputStream;
+import org.mavlink.io.LittleEndianDataOutputStream;
 /**
  * Class msg_ping
  * A ping message either requesting or responding to a ping. This allows to measure the system latencies, including serial port, radio modem and UDP connections.
@@ -43,28 +43,31 @@ public class msg_ping extends MAVLinkMessage {
 /**
  * Decode message with raw data
  */
-public void decode(ByteBuffer dis) throws IOException {
-  time_usec = (long)dis.getLong();
-  seq = (int)dis.getInt()&0x00FFFFFFFF;
-  target_system = (int)dis.get()&0x00FF;
-  target_component = (int)dis.get()&0x00FF;
+public void decode(LittleEndianDataInputStream dis) throws IOException {
+  time_usec = (long)dis.readLong();
+  seq = (int)dis.readInt()&0x00FFFFFFFF;
+  target_system = (int)dis.readUnsignedByte()&0x00FF;
+  target_component = (int)dis.readUnsignedByte()&0x00FF;
 }
 /**
  * Encode message with raw data and other informations
  */
 public byte[] encode() throws IOException {
   byte[] buffer = new byte[8+14];
-   ByteBuffer dos = ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN);
-  dos.put((byte)0xFE);
-  dos.put((byte)(length & 0x00FF));
-  dos.put((byte)(sequence & 0x00FF));
-  dos.put((byte)(sysId & 0x00FF));
-  dos.put((byte)(componentId & 0x00FF));
-  dos.put((byte)(messageType & 0x00FF));
-  dos.putLong(time_usec);
-  dos.putInt((int)(seq&0x00FFFFFFFF));
-  dos.put((byte)(target_system&0x00FF));
-  dos.put((byte)(target_component&0x00FF));
+   LittleEndianDataOutputStream dos = new LittleEndianDataOutputStream(new ByteArrayOutputStream());
+  dos.writeByte((byte)0xFE);
+  dos.writeByte(length & 0x00FF);
+  dos.writeByte(sequence & 0x00FF);
+  dos.writeByte(sysId & 0x00FF);
+  dos.writeByte(componentId & 0x00FF);
+  dos.writeByte(messageType & 0x00FF);
+  dos.writeLong(time_usec);
+  dos.writeInt((int)(seq&0x00FFFFFFFF));
+  dos.writeByte(target_system&0x00FF);
+  dos.writeByte(target_component&0x00FF);
+  dos.flush();
+  byte[] tmp = dos.toByteArray();
+  for (int b=0; b<tmp.length; b++) buffer[b]=tmp[b];
   int crc = MAVLinkCRC.crc_calculate_encode(buffer, 14);
   crc = MAVLinkCRC.crc_accumulate((byte) IMAVLinkCRC.MAVLINK_MESSAGE_CRCS[messageType], crc);
   byte crcl = (byte) (crc & 0x00FF);
@@ -73,4 +76,6 @@ public byte[] encode() throws IOException {
   buffer[21] = crch;
   return buffer;
 }
+public String toString() {
+return "MAVLINK_MSG_ID_PING : " +   "  time_usec="+time_usec+  "  seq="+seq+  "  target_system="+target_system+  "  target_component="+target_component;}
 }

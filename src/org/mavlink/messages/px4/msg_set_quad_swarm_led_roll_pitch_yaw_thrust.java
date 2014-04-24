@@ -8,8 +8,8 @@ import org.mavlink.IMAVLinkCRC;
 import org.mavlink.MAVLinkCRC;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import org.mavlink.io.LittleEndianDataInputStream;
+import org.mavlink.io.LittleEndianDataOutputStream;
 /**
  * Class msg_set_quad_swarm_led_roll_pitch_yaw_thrust
  * Setpoint for up to four quadrotors in a group / wing
@@ -63,29 +63,29 @@ public class msg_set_quad_swarm_led_roll_pitch_yaw_thrust extends MAVLinkMessage
 /**
  * Decode message with raw data
  */
-public void decode(ByteBuffer dis) throws IOException {
+public void decode(LittleEndianDataInputStream dis) throws IOException {
   for (int i=0; i<4; i++) {
-    roll[i] = (int)dis.getShort();
+    roll[i] = (int)dis.readShort();
   }
   for (int i=0; i<4; i++) {
-    pitch[i] = (int)dis.getShort();
+    pitch[i] = (int)dis.readShort();
   }
   for (int i=0; i<4; i++) {
-    yaw[i] = (int)dis.getShort();
+    yaw[i] = (int)dis.readShort();
   }
   for (int i=0; i<4; i++) {
-    thrust[i] = (int)dis.getShort()&0x00FFFF;
+    thrust[i] = (int)dis.readUnsignedShort()&0x00FFFF;
   }
-  group = (int)dis.get()&0x00FF;
-  mode = (int)dis.get()&0x00FF;
+  group = (int)dis.readUnsignedByte()&0x00FF;
+  mode = (int)dis.readUnsignedByte()&0x00FF;
   for (int i=0; i<4; i++) {
-    led_red[i] = (int)dis.get()&0x00FF;
-  }
-  for (int i=0; i<4; i++) {
-    led_blue[i] = (int)dis.get()&0x00FF;
+    led_red[i] = (int)dis.readUnsignedByte()&0x00FF;
   }
   for (int i=0; i<4; i++) {
-    led_green[i] = (int)dis.get()&0x00FF;
+    led_blue[i] = (int)dis.readUnsignedByte()&0x00FF;
+  }
+  for (int i=0; i<4; i++) {
+    led_green[i] = (int)dis.readUnsignedByte()&0x00FF;
   }
 }
 /**
@@ -93,36 +93,39 @@ public void decode(ByteBuffer dis) throws IOException {
  */
 public byte[] encode() throws IOException {
   byte[] buffer = new byte[8+46];
-   ByteBuffer dos = ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN);
-  dos.put((byte)0xFE);
-  dos.put((byte)(length & 0x00FF));
-  dos.put((byte)(sequence & 0x00FF));
-  dos.put((byte)(sysId & 0x00FF));
-  dos.put((byte)(componentId & 0x00FF));
-  dos.put((byte)(messageType & 0x00FF));
+   LittleEndianDataOutputStream dos = new LittleEndianDataOutputStream(new ByteArrayOutputStream());
+  dos.writeByte((byte)0xFE);
+  dos.writeByte(length & 0x00FF);
+  dos.writeByte(sequence & 0x00FF);
+  dos.writeByte(sysId & 0x00FF);
+  dos.writeByte(componentId & 0x00FF);
+  dos.writeByte(messageType & 0x00FF);
   for (int i=0; i<4; i++) {
-    dos.putShort((short)(roll[i]&0x00FFFF));
+    dos.writeShort(roll[i]&0x00FFFF);
   }
   for (int i=0; i<4; i++) {
-    dos.putShort((short)(pitch[i]&0x00FFFF));
+    dos.writeShort(pitch[i]&0x00FFFF);
   }
   for (int i=0; i<4; i++) {
-    dos.putShort((short)(yaw[i]&0x00FFFF));
+    dos.writeShort(yaw[i]&0x00FFFF);
   }
   for (int i=0; i<4; i++) {
-    dos.putShort((short)(thrust[i]&0x00FFFF));
+    dos.writeShort(thrust[i]&0x00FFFF);
   }
-  dos.put((byte)(group&0x00FF));
-  dos.put((byte)(mode&0x00FF));
+  dos.writeByte(group&0x00FF);
+  dos.writeByte(mode&0x00FF);
   for (int i=0; i<4; i++) {
-    dos.put((byte)(led_red[i]&0x00FF));
-  }
-  for (int i=0; i<4; i++) {
-    dos.put((byte)(led_blue[i]&0x00FF));
+    dos.writeByte(led_red[i]&0x00FF);
   }
   for (int i=0; i<4; i++) {
-    dos.put((byte)(led_green[i]&0x00FF));
+    dos.writeByte(led_blue[i]&0x00FF);
   }
+  for (int i=0; i<4; i++) {
+    dos.writeByte(led_green[i]&0x00FF);
+  }
+  dos.flush();
+  byte[] tmp = dos.toByteArray();
+  for (int b=0; b<tmp.length; b++) buffer[b]=tmp[b];
   int crc = MAVLinkCRC.crc_calculate_encode(buffer, 46);
   crc = MAVLinkCRC.crc_accumulate((byte) IMAVLinkCRC.MAVLINK_MESSAGE_CRCS[messageType], crc);
   byte crcl = (byte) (crc & 0x00FF);
@@ -131,4 +134,6 @@ public byte[] encode() throws IOException {
   buffer[53] = crch;
   return buffer;
 }
+public String toString() {
+return "MAVLINK_MSG_ID_SET_QUAD_SWARM_LED_ROLL_PITCH_YAW_THRUST : " +   "  roll="+roll+  "  pitch="+pitch+  "  yaw="+yaw+  "  thrust="+thrust+  "  group="+group+  "  mode="+mode+  "  led_red="+led_red+  "  led_blue="+led_blue+  "  led_green="+led_green;}
 }

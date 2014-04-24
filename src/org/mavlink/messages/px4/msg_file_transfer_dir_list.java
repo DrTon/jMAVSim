@@ -8,8 +8,8 @@ import org.mavlink.IMAVLinkCRC;
 import org.mavlink.MAVLinkCRC;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import org.mavlink.io.LittleEndianDataInputStream;
+import org.mavlink.io.LittleEndianDataOutputStream;
 /**
  * Class msg_file_transfer_dir_list
  * Get directory listing
@@ -55,30 +55,33 @@ public class msg_file_transfer_dir_list extends MAVLinkMessage {
 /**
  * Decode message with raw data
  */
-public void decode(ByteBuffer dis) throws IOException {
-  transfer_uid = (long)dis.getLong();
+public void decode(LittleEndianDataInputStream dis) throws IOException {
+  transfer_uid = (long)dis.readLong();
   for (int i=0; i<240; i++) {
-    dir_path[i] = (char)dis.get();
+    dir_path[i] = (char)dis.readByte();
   }
-  flags = (int)dis.get()&0x00FF;
+  flags = (int)dis.readUnsignedByte()&0x00FF;
 }
 /**
  * Encode message with raw data and other informations
  */
 public byte[] encode() throws IOException {
   byte[] buffer = new byte[8+249];
-   ByteBuffer dos = ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN);
-  dos.put((byte)0xFE);
-  dos.put((byte)(length & 0x00FF));
-  dos.put((byte)(sequence & 0x00FF));
-  dos.put((byte)(sysId & 0x00FF));
-  dos.put((byte)(componentId & 0x00FF));
-  dos.put((byte)(messageType & 0x00FF));
-  dos.putLong(transfer_uid);
+   LittleEndianDataOutputStream dos = new LittleEndianDataOutputStream(new ByteArrayOutputStream());
+  dos.writeByte((byte)0xFE);
+  dos.writeByte(length & 0x00FF);
+  dos.writeByte(sequence & 0x00FF);
+  dos.writeByte(sysId & 0x00FF);
+  dos.writeByte(componentId & 0x00FF);
+  dos.writeByte(messageType & 0x00FF);
+  dos.writeLong(transfer_uid);
   for (int i=0; i<240; i++) {
-    dos.put((byte)(dir_path[i]));
+    dos.writeByte(dir_path[i]);
   }
-  dos.put((byte)(flags&0x00FF));
+  dos.writeByte(flags&0x00FF);
+  dos.flush();
+  byte[] tmp = dos.toByteArray();
+  for (int b=0; b<tmp.length; b++) buffer[b]=tmp[b];
   int crc = MAVLinkCRC.crc_calculate_encode(buffer, 249);
   crc = MAVLinkCRC.crc_accumulate((byte) IMAVLinkCRC.MAVLINK_MESSAGE_CRCS[messageType], crc);
   byte crcl = (byte) (crc & 0x00FF);
@@ -87,4 +90,6 @@ public byte[] encode() throws IOException {
   buffer[256] = crch;
   return buffer;
 }
+public String toString() {
+return "MAVLINK_MSG_ID_FILE_TRANSFER_DIR_LIST : " +   "  transfer_uid="+transfer_uid+  "  dir_path="+getDir_path()+  "  flags="+flags;}
 }

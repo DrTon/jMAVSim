@@ -8,8 +8,8 @@ import org.mavlink.IMAVLinkCRC;
 import org.mavlink.MAVLinkCRC;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import org.mavlink.io.LittleEndianDataInputStream;
+import org.mavlink.io.LittleEndianDataOutputStream;
 /**
  * Class msg_log_data
  * Reply to LOG_REQUEST_DATA
@@ -43,12 +43,12 @@ public class msg_log_data extends MAVLinkMessage {
 /**
  * Decode message with raw data
  */
-public void decode(ByteBuffer dis) throws IOException {
-  ofs = (int)dis.getInt()&0x00FFFFFFFF;
-  id = (int)dis.getShort()&0x00FFFF;
-  count = (int)dis.get()&0x00FF;
+public void decode(LittleEndianDataInputStream dis) throws IOException {
+  ofs = (int)dis.readInt()&0x00FFFFFFFF;
+  id = (int)dis.readUnsignedShort()&0x00FFFF;
+  count = (int)dis.readUnsignedByte()&0x00FF;
   for (int i=0; i<90; i++) {
-    data[i] = (int)dis.get()&0x00FF;
+    data[i] = (int)dis.readUnsignedByte()&0x00FF;
   }
 }
 /**
@@ -56,19 +56,22 @@ public void decode(ByteBuffer dis) throws IOException {
  */
 public byte[] encode() throws IOException {
   byte[] buffer = new byte[8+97];
-   ByteBuffer dos = ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN);
-  dos.put((byte)0xFE);
-  dos.put((byte)(length & 0x00FF));
-  dos.put((byte)(sequence & 0x00FF));
-  dos.put((byte)(sysId & 0x00FF));
-  dos.put((byte)(componentId & 0x00FF));
-  dos.put((byte)(messageType & 0x00FF));
-  dos.putInt((int)(ofs&0x00FFFFFFFF));
-  dos.putShort((short)(id&0x00FFFF));
-  dos.put((byte)(count&0x00FF));
+   LittleEndianDataOutputStream dos = new LittleEndianDataOutputStream(new ByteArrayOutputStream());
+  dos.writeByte((byte)0xFE);
+  dos.writeByte(length & 0x00FF);
+  dos.writeByte(sequence & 0x00FF);
+  dos.writeByte(sysId & 0x00FF);
+  dos.writeByte(componentId & 0x00FF);
+  dos.writeByte(messageType & 0x00FF);
+  dos.writeInt((int)(ofs&0x00FFFFFFFF));
+  dos.writeShort(id&0x00FFFF);
+  dos.writeByte(count&0x00FF);
   for (int i=0; i<90; i++) {
-    dos.put((byte)(data[i]&0x00FF));
+    dos.writeByte(data[i]&0x00FF);
   }
+  dos.flush();
+  byte[] tmp = dos.toByteArray();
+  for (int b=0; b<tmp.length; b++) buffer[b]=tmp[b];
   int crc = MAVLinkCRC.crc_calculate_encode(buffer, 97);
   crc = MAVLinkCRC.crc_accumulate((byte) IMAVLinkCRC.MAVLINK_MESSAGE_CRCS[messageType], crc);
   byte crcl = (byte) (crc & 0x00FF);
@@ -77,4 +80,6 @@ public byte[] encode() throws IOException {
   buffer[104] = crch;
   return buffer;
 }
+public String toString() {
+return "MAVLINK_MSG_ID_LOG_DATA : " +   "  ofs="+ofs+  "  id="+id+  "  count="+count+  "  data="+data;}
 }

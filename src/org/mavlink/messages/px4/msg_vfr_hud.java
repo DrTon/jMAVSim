@@ -8,8 +8,8 @@ import org.mavlink.IMAVLinkCRC;
 import org.mavlink.MAVLinkCRC;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import org.mavlink.io.LittleEndianDataInputStream;
+import org.mavlink.io.LittleEndianDataOutputStream;
 /**
  * Class msg_vfr_hud
  * Metrics typically displayed on a HUD for fixed wing aircraft
@@ -51,32 +51,35 @@ public class msg_vfr_hud extends MAVLinkMessage {
 /**
  * Decode message with raw data
  */
-public void decode(ByteBuffer dis) throws IOException {
-  airspeed = (float)dis.getFloat();
-  groundspeed = (float)dis.getFloat();
-  alt = (float)dis.getFloat();
-  climb = (float)dis.getFloat();
-  heading = (int)dis.getShort();
-  throttle = (int)dis.getShort()&0x00FFFF;
+public void decode(LittleEndianDataInputStream dis) throws IOException {
+  airspeed = (float)dis.readFloat();
+  groundspeed = (float)dis.readFloat();
+  alt = (float)dis.readFloat();
+  climb = (float)dis.readFloat();
+  heading = (int)dis.readShort();
+  throttle = (int)dis.readUnsignedShort()&0x00FFFF;
 }
 /**
  * Encode message with raw data and other informations
  */
 public byte[] encode() throws IOException {
   byte[] buffer = new byte[8+20];
-   ByteBuffer dos = ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN);
-  dos.put((byte)0xFE);
-  dos.put((byte)(length & 0x00FF));
-  dos.put((byte)(sequence & 0x00FF));
-  dos.put((byte)(sysId & 0x00FF));
-  dos.put((byte)(componentId & 0x00FF));
-  dos.put((byte)(messageType & 0x00FF));
-  dos.putFloat(airspeed);
-  dos.putFloat(groundspeed);
-  dos.putFloat(alt);
-  dos.putFloat(climb);
-  dos.putShort((short)(heading&0x00FFFF));
-  dos.putShort((short)(throttle&0x00FFFF));
+   LittleEndianDataOutputStream dos = new LittleEndianDataOutputStream(new ByteArrayOutputStream());
+  dos.writeByte((byte)0xFE);
+  dos.writeByte(length & 0x00FF);
+  dos.writeByte(sequence & 0x00FF);
+  dos.writeByte(sysId & 0x00FF);
+  dos.writeByte(componentId & 0x00FF);
+  dos.writeByte(messageType & 0x00FF);
+  dos.writeFloat(airspeed);
+  dos.writeFloat(groundspeed);
+  dos.writeFloat(alt);
+  dos.writeFloat(climb);
+  dos.writeShort(heading&0x00FFFF);
+  dos.writeShort(throttle&0x00FFFF);
+  dos.flush();
+  byte[] tmp = dos.toByteArray();
+  for (int b=0; b<tmp.length; b++) buffer[b]=tmp[b];
   int crc = MAVLinkCRC.crc_calculate_encode(buffer, 20);
   crc = MAVLinkCRC.crc_accumulate((byte) IMAVLinkCRC.MAVLINK_MESSAGE_CRCS[messageType], crc);
   byte crcl = (byte) (crc & 0x00FF);
@@ -85,4 +88,6 @@ public byte[] encode() throws IOException {
   buffer[27] = crch;
   return buffer;
 }
+public String toString() {
+return "MAVLINK_MSG_ID_VFR_HUD : " +   "  airspeed="+airspeed+  "  groundspeed="+groundspeed+  "  alt="+alt+  "  climb="+climb+  "  heading="+heading+  "  throttle="+throttle;}
 }

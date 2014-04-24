@@ -2,7 +2,7 @@
  * Generated class : msg_rc_channels
  * DO NOT MODIFY!
  **/
-package org.mavlink.messages.common;
+package org.mavlink.messages.px4;
 import org.mavlink.messages.MAVLinkMessage;
 import org.mavlink.IMAVLinkCRC;
 import org.mavlink.MAVLinkCRC;
