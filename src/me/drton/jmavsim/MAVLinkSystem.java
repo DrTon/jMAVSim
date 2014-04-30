@@ -28,6 +28,7 @@ public class MAVLinkSystem extends MAVLinkNode {
         if (t - heartbeatLast >= heartbeatInterval) {
             heartbeatLast = t;
             msg_heartbeat msg = new msg_heartbeat(sysId, componentId);
+            msg.mavlink_version = 3;
             sendMessage(msg);
         }
     }

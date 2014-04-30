@@ -66,7 +66,7 @@ public class Simulator {
         target.setMass(90.0);
         target.initGPS(55.753395, 37.625427);
         target.getPosition().set(5, 0, -5);
-        connCommon.addNode(new MAVLinkTargetSystem(2, 0, target));
+        connCommon.addNode(new MAVLinkTargetSystem(2, 1, target));
         world.addObject(target);
         // Create visualizer
         visualizer = new Visualizer(world);
