@@ -2,6 +2,7 @@ package me.drton.jmavsim;
 
 import me.drton.jmavsim.vehicle.AbstractMulticopter;
 import me.drton.jmavsim.vehicle.Quadcopter;
+import org.mavlink.messages.IMAVLinkMessageID;
 
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Vector3d;
@@ -25,6 +26,9 @@ public class Simulator {
         MAVLinkConnection connHIL = new MAVLinkConnection(world);
         world.addObject(connHIL);
         MAVLinkConnection connCommon = new MAVLinkConnection(world);
+        connCommon.addSkipMessage(IMAVLinkMessageID.MAVLINK_MSG_ID_HIL_CONTROLS);
+        connCommon.addSkipMessage(IMAVLinkMessageID.MAVLINK_MSG_ID_HIL_SENSOR);
+        connCommon.addSkipMessage(IMAVLinkMessageID.MAVLINK_MSG_ID_HIL_GPS);
         world.addObject(connCommon);
         // Create and ports
         SerialMAVLinkPort serialMAVLinkPort = new SerialMAVLinkPort();
