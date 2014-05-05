@@ -22,26 +22,34 @@ public class Simulator {
     public Simulator() throws IOException, InterruptedException {
         // Create world
         world = new World();
+        world.setGlobalReference(new LatLonAlt(55.753395, 37.625427, 0.0));
+
         // Create MAVLink connections
         MAVLinkConnection connHIL = new MAVLinkConnection(world);
         world.addObject(connHIL);
         MAVLinkConnection connCommon = new MAVLinkConnection(world);
+        // Don't spam ground station with HIL messages
         connCommon.addSkipMessage(IMAVLinkMessageID.MAVLINK_MSG_ID_HIL_CONTROLS);
         connCommon.addSkipMessage(IMAVLinkMessageID.MAVLINK_MSG_ID_HIL_SENSOR);
         connCommon.addSkipMessage(IMAVLinkMessageID.MAVLINK_MSG_ID_HIL_GPS);
         world.addObject(connCommon);
-        // Create and ports
+
+        // Create ports
+        // Serial port: connection to autopilot
         SerialMAVLinkPort serialMAVLinkPort = new SerialMAVLinkPort();
         connCommon.addNode(serialMAVLinkPort);
         connHIL.addNode(serialMAVLinkPort);
+        // UDP port: connection to ground station
         UDPMavLinkPort udpMavLinkPort = new UDPMavLinkPort();
         connCommon.addNode(udpMavLinkPort);
+
         // Create environment
         SimpleEnvironment simpleEnvironment = new SimpleEnvironment(world);
         simpleEnvironment.setMagField(new Vector3d(0.2f, 0.0f, 0.5f));
         //simpleEnvironment.setWind(new Vector3d(0.0, 5.0, 0.0));
         simpleEnvironment.setGroundLevel(0.0f);
         world.addObject(simpleEnvironment);
+
         // Create vehicle with sensors
         Vector3d gc = new Vector3d(0.0, 0.0, 0.0);  // gravity center
         AbstractMulticopter vehicle = new Quadcopter(world, "models/3dr_arducopter_quad_x.obj", "x", 0.33 / 2, 4.0,
@@ -54,39 +62,55 @@ public class Simulator {
         I.m22 = 0.009;  // Z
         vehicle.setMomentOfInertia(I);
         SimpleSensors sensors = new SimpleSensors();
-        sensors.initGPS(55.753395, 37.625427);
         vehicle.setSensors(sensors);
         vehicle.setDragMove(0.02);
         //v.setDragRotate(0.1);
-        CameraGimbal2D gimbal = new CameraGimbal2D(world);
-        gimbal.setBaseObject(vehicle);
-        gimbal.setPitchChannel(4);
-        gimbal.setPitchScale(1.9);
-        world.addObject(gimbal);
+
+        // Create MAVLink HIL system
         // SysId should be the same as autopilot, ComponentId should be different!
         connHIL.addNode(new MAVLinkHILSystem(1, 51, vehicle));
         world.addObject(vehicle);
-        Target target = new Target(world, 0.3);
-        target.setMass(90.0);
-        target.initGPS(55.753395, 37.625427);
-        target.getPosition().set(5, 0, -5);
+
+        // Create target
+        SimpleTarget target = new SimpleTarget(world, 0.3);
+        long t = System.currentTimeMillis();
+        target.setTrajectory(new Vector3d(5.0, 0.0, -2.0), new Vector3d(5.0, 100.0, -2.0), t + 20000, t + 50000);
         connCommon.addNode(new MAVLinkTargetSystem(2, 1, target));
         world.addObject(target);
+
         // Create visualizer
         visualizer = new Visualizer(world);
-        visualizer.setViewerTarget(target);
-        visualizer.setViewerPosition(gimbal);
-        visualizer.setAutoRotate(false);
+        // Put camera on vehicle (FPV)
+        /*
+        visualizer.setViewerPositionObject(vehicle);   // Without gimbal
+         */
+        // Put camera on vehicle with gimbal
+        // Create camera gimbal
+        CameraGimbal2D gimbal = new CameraGimbal2D(world);
+        gimbal.setBaseObject(vehicle);
+        gimbal.setPitchChannel(4);
+        gimbal.setPitchScale(1.57); // +/- 90deg
+        world.addObject(gimbal);
+        visualizer.setViewerPositionObject(gimbal);      // With gimbal
+        // Put camera on static point and point to vehicle
+        /*
+        visualizer.setViewerPosition(new Vector3d(-5.0, 0.0, -1.7));
+        visualizer.setViewerTargetObject(vehicle);
+        visualizer.setAutoRotate(true);
+        */
+
         // Open ports
         serialMAVLinkPort.open("/dev/tty.usbmodem1", 230400, 8, 1, 0);
         serialMAVLinkPort.sendRaw("\nsh /etc/init.d/rc.usb\n".getBytes());
         udpMavLinkPort.open(new InetSocketAddress(14555));
+
         // Run
         try {
             run();
         } catch (InterruptedException e) {
             System.out.println("Exit");
         }
+
         // Close ports
         serialMAVLinkPort.close();
         udpMavLinkPort.close();

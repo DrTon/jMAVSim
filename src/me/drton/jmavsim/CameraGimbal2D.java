@@ -9,8 +9,8 @@ import java.util.List;
 /**
  * User: ton Date: 21.03.14 Time: 23:22
  */
-public class CameraGimbal2D extends MechanicalObject {
-    private MechanicalObject baseObject;
+public class CameraGimbal2D extends KinematicObject {
+    private DynamicObject baseObject;
     private int pitchChannel = -1;
     private double pitchScale = 1.0;
 
@@ -18,7 +18,7 @@ public class CameraGimbal2D extends MechanicalObject {
         super(world);
     }
 
-    public void setBaseObject(MechanicalObject object) {
+    public void setBaseObject(DynamicObject object) {
         this.baseObject = object;
     }
 
@@ -46,15 +46,5 @@ public class CameraGimbal2D extends MechanicalObject {
                 this.rotation.mul(r);
             }
         }
-    }
-
-    @Override
-    protected Vector3d getForce() {
-        return null;
-    }
-
-    @Override
-    protected Vector3d getTorque() {
-        return null;
     }
 }
