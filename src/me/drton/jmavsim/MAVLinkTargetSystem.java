@@ -38,10 +38,10 @@ public class MAVLinkTargetSystem extends MAVLinkSystem {
             msg_target_time.time = t * 1000;
             msg_target_time.lat = (long) (p.position.lat * 1e7);
             msg_target_time.lon = (long) (p.position.lon * 1e7);
-            msg_target_time.alt = (long) (p.position.alt * 1e3);
-            msg_target_time.vx = (int) (p.velocity.x * 100);
-            msg_target_time.vy = (int) (p.velocity.y * 100);
-            msg_target_time.vz = (int) (p.velocity.z * 100);
+            msg_target_time.alt = (float) (p.position.alt);
+            msg_target_time.vx = (float) p.velocity.x;
+            msg_target_time.vy = (float) p.velocity.y;
+            msg_target_time.vz = (float) p.velocity.z;
             sendMessage(msg_target_time);
         }
     }

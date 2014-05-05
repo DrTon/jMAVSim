@@ -4,6 +4,7 @@ import me.drton.flightplot.FormatErrorException;
 import me.drton.flightplot.LogReader;
 import me.drton.flightplot.PX4LogReader;
 
+import javax.vecmath.Vector3d;
 import java.io.EOFException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -18,6 +19,7 @@ public class LogPlayerTarget extends Target {
     private long logStart = 0;
     private long timeStart = 0;
     private long logT = 0;
+    private Vector3d positionOffset = new Vector3d();
 
     public LogPlayerTarget(World world, double size) throws FileNotFoundException {
         super(world, size);
@@ -25,18 +27,22 @@ public class LogPlayerTarget extends Target {
 
     void openLog(String fileName) throws IOException, FormatErrorException {
         logReader = new PX4LogReader(fileName);
-        logStart = timeStart - logReader.getStartMicroseconds() / 1000;
+        logStart = logReader.getStartMicroseconds() / 1000;
     }
 
     public void setTimeStart(long timeStart) {
         this.timeStart = timeStart;
     }
 
+    public void setPositionOffset(Vector3d positionOffset) {
+        this.positionOffset = positionOffset;
+    }
+
     @Override
     public void update(long t) {
         if (logReader != null) {
             Map<String, Object> logData = new HashMap<String, Object>();
-            while (logStart + logT < t) {
+            while (timeStart - logStart + logT < t) {
                 try {
                     logT = logReader.readUpdate(logData) / 1000;
                 } catch (EOFException e) {
@@ -52,8 +58,8 @@ public class LogPlayerTarget extends Target {
             if (logData.containsKey("LPOS.X") &&
                     logData.containsKey("LPOS.Y") &&
                     logData.containsKey("LPOS.Z")) {
-                position.set((Float) logData.get("LPOS.X"), (Float) logData.get("LPOS.Y"),
-                        (Float) logData.get("LPOS.Z"));
+                position.add(new Vector3d((Float) logData.get("LPOS.X"), (Float) logData.get("LPOS.Y"),
+                        (Float) logData.get("LPOS.Z")), positionOffset);
             }
             if (logData.containsKey("LPOS.VX") &&
                     logData.containsKey("LPOS.VY") &&
