@@ -1,5 +1,7 @@
 package me.drton.jmavsim;
 
+import javax.vecmath.Vector3d;
+
 import static java.lang.Math.*;
 
 /**
@@ -10,6 +12,7 @@ public class GlobalPositionProjector {
     private static double r_earth = 6371000.0;
     private double lat0;
     private double lon0;
+    private double alt0;
     private double cos_lat0;
     private double sin_lat0;
 
@@ -21,19 +24,21 @@ public class GlobalPositionProjector {
         return inited;
     }
 
-    public void init(double lat, double lon) {
+    public void init(LatLonAlt ref) {
         inited = true;
-        lat0 = lat * PI / 180.0;
-        lon0 = lon * PI / 180.0;
+        lat0 = ref.lat * PI / 180.0;
+        lon0 = ref.lon * PI / 180.0;
+        alt0 = ref.alt;
         cos_lat0 = cos(lat0);
         sin_lat0 = sin(lat0);
     }
 
-    public double[] project(double lat, double lon) {
-        if (!inited)
+    public Vector3d project(LatLonAlt p) {
+        if (!inited) {
             throw new RuntimeException("Not initialized");
-        double lat_rad = lat * PI / 180.0;
-        double lon_rad = lon * PI / 180.0;
+        }
+        double lat_rad = p.lat * PI / 180.0;
+        double lon_rad = p.lon * PI / 180.0;
         double sin_lat = sin(lat_rad);
         double cos_lat = cos(lat_rad);
         double cos_d_lon = cos(lon_rad - lon0);
@@ -41,14 +46,16 @@ public class GlobalPositionProjector {
         double k = (c == 0.0) ? 1.0 : (c / sin(c));
         double y = k * cos_lat * sin(lon_rad - lon0) * r_earth;
         double x = k * (cos_lat0 * sin_lat - sin_lat0 * cos_lat * cos_d_lon) * r_earth;
-        return new double[]{x, y};
+        double z = alt0 - p.alt;
+        return new Vector3d(x, y, z);
     }
 
-    public double[] reproject(double x, double y) {
-        if (!inited)
+    public LatLonAlt reproject(Vector3d v) {
+        if (!inited) {
             throw new RuntimeException("Not initialized");
-        double x_rad = x / r_earth;
-        double y_rad = y / r_earth;
+        }
+        double x_rad = v.x / r_earth;
+        double y_rad = v.y / r_earth;
         double c = sqrt(x_rad * x_rad + y_rad * y_rad);
         double sin_c = sin(c);
         double cos_c = cos(c);
@@ -61,6 +68,6 @@ public class GlobalPositionProjector {
             lat_rad = lat0;
             lon_rad = lon0;
         }
-        return new double[]{lat_rad * 180.0 / Math.PI, lon_rad * 180.0 / Math.PI};
+        return new LatLonAlt(lat_rad * 180.0 / Math.PI, lon_rad * 180.0 / Math.PI, alt0 - v.z);
     }
 }

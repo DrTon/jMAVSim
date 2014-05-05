@@ -7,19 +7,13 @@ import javax.vecmath.Vector3d;
 /**
  * User: ton Date: 02.02.14 Time: 12:01
  */
-public abstract class MechanicalObject extends WorldObject {
+public abstract class DynamicObject extends KinematicObject {
     protected long lastTime = -1;
-    protected Vector3d position = new Vector3d();
-    protected Vector3d velocity = new Vector3d();
-    protected Vector3d acceleration = new Vector3d();
-    protected Matrix3d rotation = new Matrix3d();
-    protected Vector3d rotationRate = new Vector3d();
     protected double mass = 1.0;
     protected Matrix3d momentOfInertia = new Matrix3d();
     protected Matrix3d momentOfInertiaInv = new Matrix3d();
-    private Sensors sensors = null;
 
-    public MechanicalObject(World world) {
+    public DynamicObject(World world) {
         super(world);
         rotation.rotX(0);
         momentOfInertia.rotZ(0.0);
@@ -37,35 +31,6 @@ public abstract class MechanicalObject extends WorldObject {
     public void setMomentOfInertia(Matrix3d momentOfInertia) {
         this.momentOfInertia.set(momentOfInertia);
         this.momentOfInertiaInv.invert(momentOfInertia);
-    }
-
-    public void setSensors(Sensors sensors) {
-        this.sensors = sensors;
-        sensors.setObject(this);
-    }
-
-    public Sensors getSensors() {
-        return sensors;
-    }
-
-    public Vector3d getPosition() {
-        return position;
-    }
-
-    public Vector3d getVelocity() {
-        return velocity;
-    }
-
-    public Vector3d getAcceleration() {
-        return acceleration;
-    }
-
-    public Matrix3d getRotation() {
-        return rotation;
-    }
-
-    public Vector3d getRotationRate() {
-        return rotationRate;
     }
 
     @Override
@@ -112,8 +77,7 @@ public abstract class MechanicalObject extends WorldObject {
             rotationRate.add(angularAcc);
         }
         lastTime = t;
-        if (sensors != null)
-            sensors.update(t);
+        super.update(t);
     }
 
     protected abstract Vector3d getForce();

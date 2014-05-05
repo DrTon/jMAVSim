@@ -17,8 +17,8 @@ public class Visualizer {
     private BoundingSphere sceneBounds = new BoundingSphere(new Point3d(0, 0, 0), 100000.0);
     private Vector3d viewerPos = new Vector3d(-7.0, 0.0, -1.7);
     private Transform3D viewerTransform = new Transform3D();
-    private VisualObject viewerTarget;
-    private MechanicalObject viewerPosition;
+    private KinematicObject viewerTarget;
+    private DynamicObject viewerPosition;
     private boolean autoRotate = true;
 
     public Visualizer(World world) {
@@ -27,8 +27,12 @@ public class Visualizer {
         universe.getViewer().getView().setBackClipDistance(100000.0);
         createEnvironment();
         for (WorldObject object : world.getObjects()) {
-            if (object instanceof VisualObject)
-                universe.addBranchGraph(((VisualObject) object).getBranchGroup());
+            if (object instanceof KinematicObject) {
+                BranchGroup bg = ((KinematicObject) object).getBranchGroup();
+                if (bg != null) {
+                    universe.addBranchGraph(bg);
+                }
+            }
         }
     }
 
@@ -36,11 +40,11 @@ public class Visualizer {
         this.autoRotate = autoRotate;
     }
 
-    public void setViewerTarget(VisualObject object) {
+    public void setViewerTarget(KinematicObject object) {
         this.viewerTarget = object;
     }
 
-    public void setViewerPosition(MechanicalObject object) {
+    public void setViewerPosition(DynamicObject object) {
         this.viewerPosition = object;
     }
 

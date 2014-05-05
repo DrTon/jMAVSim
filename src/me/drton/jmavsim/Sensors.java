@@ -6,7 +6,7 @@ import javax.vecmath.Vector3d;
  * User: ton Date: 26.11.13 Time: 13:32
  */
 public interface Sensors {
-    void setObject(MechanicalObject object);
+    void setObject(DynamicObject object);
 
     Vector3d getAcc();
 
@@ -16,7 +16,7 @@ public interface Sensors {
 
     double getPressureAlt();
 
-    GlobalPosition getGlobalPosition();
+    GlobalPositionVelocity getGlobalPosition();
 
     void update(long t);
 }

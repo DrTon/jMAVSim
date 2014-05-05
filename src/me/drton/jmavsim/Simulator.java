@@ -22,6 +22,7 @@ public class Simulator {
     public Simulator() throws IOException, InterruptedException {
         // Create world
         world = new World();
+        world.setGlobalReference(new LatLonAlt(55.753395, 37.625427, 0.0));
         // Create MAVLink connections
         MAVLinkConnection connHIL = new MAVLinkConnection(world);
         world.addObject(connHIL);
@@ -54,7 +55,6 @@ public class Simulator {
         I.m22 = 0.009;  // Z
         vehicle.setMomentOfInertia(I);
         SimpleSensors sensors = new SimpleSensors();
-        sensors.initGPS(55.753395, 37.625427);
         vehicle.setSensors(sensors);
         vehicle.setDragMove(0.02);
         //v.setDragRotate(0.1);
@@ -66,10 +66,9 @@ public class Simulator {
         // SysId should be the same as autopilot, ComponentId should be different!
         connHIL.addNode(new MAVLinkHILSystem(1, 51, vehicle));
         world.addObject(vehicle);
-        Target target = new Target(world, 0.3);
-        target.setMass(90.0);
-        target.initGPS(55.753395, 37.625427);
-        target.getPosition().set(5, 0, -5);
+        SimpleTarget target = new SimpleTarget(world, 0.3);
+        long t = System.currentTimeMillis();
+        target.setTrajectory(new Vector3d(5.0, 0.0, -2.0), new Vector3d(5.0, 100.0, -2.0), t + 20000, t + 50000);
         connCommon.addNode(new MAVLinkTargetSystem(2, 1, target));
         world.addObject(target);
         // Create visualizer

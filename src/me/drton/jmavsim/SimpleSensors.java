@@ -7,16 +7,13 @@ import javax.vecmath.Vector3d;
  * User: ton Date: 27.11.13 Time: 19:06
  */
 public class SimpleSensors implements Sensors {
-    private MechanicalObject object;
+    private DynamicObject object;
     private GlobalPositionProjector globalProjector = new GlobalPositionProjector();
 
-    public void initGPS(double lat, double lon) {
-        globalProjector.init(lat, lon);
-    }
-
     @Override
-    public void setObject(MechanicalObject object) {
+    public void setObject(DynamicObject object) {
         this.object = object;
+        globalProjector.init(object.getWorld().getGlobalReference());
     }
 
     @Override
@@ -49,20 +46,15 @@ public class SimpleSensors implements Sensors {
     }
 
     @Override
-    public GlobalPosition getGlobalPosition() {
-        double[] latlon = globalProjector.reproject(object.getPosition().x, object.getPosition().y);
-        GlobalPosition gps = new GlobalPosition();
-        gps.lat = latlon[0];
-        gps.lon = latlon[1];
-        gps.alt = -object.getPosition().z;
-        gps.eph = 1.0;
-        gps.epv = 1.0;
-        gps.vn = object.getVelocity().x;
-        gps.ve = object.getVelocity().y;
-        gps.vd = object.getVelocity().z;
-        gps.fix = 3;
-        gps.time = System.currentTimeMillis() * 1000;
-        return gps;
+    public GlobalPositionVelocity getGlobalPosition() {
+        GlobalPositionVelocity p = new GlobalPositionVelocity();
+        p.position = globalProjector.reproject(object.getPosition());
+        p.eph = 1.0;
+        p.epv = 1.0;
+        p.velocity = object.getVelocity();
+        p.fix = 3;
+        p.time = System.currentTimeMillis() * 1000;
+        return p;
     }
 
     @Override

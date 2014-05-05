@@ -9,6 +9,7 @@ import java.util.List;
 public class World {
     private List<WorldObject> objects = new ArrayList<WorldObject>();
     private Environment environment = null;
+    private LatLonAlt globalReference = new LatLonAlt(0.0, 0.0, 0.0);
 
     public void addObject(WorldObject obj) {
         objects.add(obj);
@@ -27,5 +28,13 @@ public class World {
     public synchronized void update(long t) {
         for (WorldObject obj : objects)
             obj.update(t);
+    }
+
+    public void setGlobalReference(LatLonAlt globalReference) {
+        this.globalReference = globalReference;
+    }
+
+    public LatLonAlt getGlobalReference() {
+        return globalReference;
     }
 }
