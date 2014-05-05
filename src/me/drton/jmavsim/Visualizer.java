@@ -15,11 +15,11 @@ public class Visualizer {
     private SimpleUniverse universe;
     private World world;
     private BoundingSphere sceneBounds = new BoundingSphere(new Point3d(0, 0, 0), 100000.0);
-    private Vector3d viewerPos = new Vector3d(-7.0, 0.0, -1.7);
+    private Vector3d viewerPosition = new Vector3d(0.0, 0.0, 0.0);
     private Transform3D viewerTransform = new Transform3D();
-    private KinematicObject viewerTarget;
-    private DynamicObject viewerPosition;
-    private boolean autoRotate = true;
+    private KinematicObject viewerTargetObject;
+    private KinematicObject viewerPositionObject;
+    private boolean autoRotate = false;
 
     public Visualizer(World world) {
         this.world = world;
@@ -40,12 +40,17 @@ public class Visualizer {
         this.autoRotate = autoRotate;
     }
 
-    public void setViewerTarget(KinematicObject object) {
-        this.viewerTarget = object;
+    public void setViewerTargetObject(KinematicObject object) {
+        this.viewerTargetObject = object;
     }
 
-    public void setViewerPosition(DynamicObject object) {
-        this.viewerPosition = object;
+    public void setViewerPositionObject(KinematicObject object) {
+        this.viewerPositionObject = object;
+    }
+
+    public void setViewerPosition(Vector3d position) {
+        this.viewerPositionObject = null;
+        this.viewerPosition = position;
     }
 
     private void createEnvironment() {
@@ -102,36 +107,36 @@ public class Visualizer {
     }
 
     private void updateViewer() {
-        if (viewerPosition != null) {
-            viewerPos.set(viewerPosition.getPosition());
+        if (viewerPositionObject != null) {
+            viewerPosition.set(viewerPositionObject.getPosition());
         }
         Matrix3d mat = new Matrix3d();
         mat.setIdentity();
         Matrix3d m1 = new Matrix3d();
         if (autoRotate) {
-            if (viewerTarget != null) {
-                Vector3d pos = viewerTarget.getPosition();
+            if (viewerTargetObject != null) {
+                Vector3d pos = viewerTargetObject.getPosition();
                 mat.rotZ(Math.PI);
                 Vector3d dist = new Vector3d();
-                dist.sub(pos, viewerPos);
+                dist.sub(pos, viewerPosition);
                 m1.rotY(Math.PI / 2);
                 mat.mul(m1);
                 m1.rotZ(-Math.PI / 2);
                 mat.mul(m1);
-                m1.rotY(-Math.atan2(pos.y - viewerPos.y, pos.x - viewerPos.x));
+                m1.rotY(-Math.atan2(pos.y - viewerPosition.y, pos.x - viewerPosition.x));
                 mat.mul(m1);
-                m1.rotX(-Math.asin((pos.z - viewerPos.z) / dist.length()));
+                m1.rotX(-Math.asin((pos.z - viewerPosition.z) / dist.length()));
                 mat.mul(m1);
             }
         } else {
-            mat.mul(viewerPosition.getRotation());
+            mat.mul(viewerPositionObject.getRotation());
             m1.rotZ(Math.PI / 2);
             mat.mul(m1);
             m1.rotX(-Math.PI / 2);
             mat.mul(m1);
         }
         viewerTransform.setRotation(mat);
-        viewerTransform.setTranslation(viewerPos);
+        viewerTransform.setTranslation(viewerPosition);
         universe.getViewingPlatform().getViewPlatformTransform().setTransform(viewerTransform);
     }
 

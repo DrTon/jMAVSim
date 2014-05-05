@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * User: ton Date: 21.03.14 Time: 23:22
  */
-public class CameraGimbal2D extends DynamicObject {
+public class CameraGimbal2D extends KinematicObject {
     private DynamicObject baseObject;
     private int pitchChannel = -1;
     private double pitchScale = 1.0;
@@ -46,15 +46,5 @@ public class CameraGimbal2D extends DynamicObject {
                 this.rotation.mul(r);
             }
         }
-    }
-
-    @Override
-    protected Vector3d getForce() {
-        return null;
-    }
-
-    @Override
-    protected Vector3d getTorque() {
-        return null;
     }
 }
