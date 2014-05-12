@@ -1,5 +1,6 @@
 package me.drton.jmavsim;
 
+import me.drton.jmavlib.geo.LatLonAlt;
 import me.drton.jmavsim.vehicle.AbstractMulticopter;
 import me.drton.jmavsim.vehicle.Quadcopter;
 import org.mavlink.messages.IMAVLinkMessageID;

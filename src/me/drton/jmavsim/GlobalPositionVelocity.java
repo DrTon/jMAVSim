@@ -1,5 +1,7 @@
 package me.drton.jmavsim;
 
+import me.drton.jmavlib.geo.LatLonAlt;
+
 import javax.vecmath.Vector3d;
 
 /**
