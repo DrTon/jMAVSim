@@ -1,5 +1,6 @@
 package me.drton.jmavsim;
 
+import me.drton.jmavlib.geo.LatLonAlt;
 import me.drton.jmavsim.vehicle.AbstractMulticopter;
 import me.drton.jmavsim.vehicle.Quadcopter;
 import org.mavlink.messages.IMAVLinkMessageID;
@@ -45,7 +46,11 @@ public class Simulator {
 
         // Create environment
         SimpleEnvironment simpleEnvironment = new SimpleEnvironment(world);
-        simpleEnvironment.setMagField(new Vector3d(0.2f, 0.0f, 0.5f));
+        Vector3d magField = new Vector3d(0.2f, 0.0f, 0.5f);
+        Matrix3d magDecl = new Matrix3d();
+        magDecl.rotZ(11.0 / 180.0 * Math.PI);
+        magDecl.transform(magField);
+        simpleEnvironment.setMagField(magField);
         //simpleEnvironment.setWind(new Vector3d(0.0, 5.0, 0.0));
         simpleEnvironment.setGroundLevel(0.0f);
         world.addObject(simpleEnvironment);

@@ -1,7 +1,10 @@
 package me.drton.jmavsim;
 
 import com.sun.j3d.utils.geometry.Sphere;
+import me.drton.jmavlib.geo.GlobalPositionProjector;
+import me.drton.jmavlib.geo.LatLonAlt;
 
+import javax.vecmath.Vector3d;
 import java.io.FileNotFoundException;
 
 /**
@@ -18,9 +21,10 @@ public class Target extends KinematicObject {
     }
 
     public GlobalPositionVelocity getGlobalPosition() {
-        LatLonAlt p = gpsProjector.reproject(getPosition());
+        Vector3d pos = getPosition();
+        LatLonAlt latLonAlt = gpsProjector.reproject(new double[]{pos.x, pos.y, pos.z});
         GlobalPositionVelocity gps = new GlobalPositionVelocity();
-        gps.position = p;
+        gps.position = latLonAlt;
         gps.eph = 1.0;
         gps.epv = 1.0;
         gps.velocity = getVelocity();

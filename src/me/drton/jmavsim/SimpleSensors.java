@@ -1,5 +1,7 @@
 package me.drton.jmavsim;
 
+import me.drton.jmavlib.geo.GlobalPositionProjector;
+
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Vector3d;
 
@@ -48,7 +50,8 @@ public class SimpleSensors implements Sensors {
     @Override
     public GlobalPositionVelocity getGlobalPosition() {
         GlobalPositionVelocity p = new GlobalPositionVelocity();
-        p.position = globalProjector.reproject(object.getPosition());
+        Vector3d pos = object.getPosition();
+        p.position = globalProjector.reproject(new double[]{pos.x, pos.y, pos.z});
         p.eph = 1.0;
         p.epv = 1.0;
         p.velocity = object.getVelocity();

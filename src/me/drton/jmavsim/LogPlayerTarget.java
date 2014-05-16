@@ -1,8 +1,8 @@
 package me.drton.jmavsim;
 
-import me.drton.flightplot.FormatErrorException;
-import me.drton.flightplot.LogReader;
-import me.drton.flightplot.PX4LogReader;
+import me.drton.jmavlib.log.FormatErrorException;
+import me.drton.jmavlib.log.LogReader;
+import me.drton.jmavlib.log.PX4LogReader;
 
 import javax.vecmath.Vector3d;
 import java.io.EOFException;
