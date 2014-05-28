@@ -88,6 +88,15 @@ public class Simulator {
         world.addObject(target);
         */
 
+        // Create MAVLink control
+        /*
+        // TargetComponentID should be 190
+        MAVLinkControl mavLinkControl = new MAVLinkControl(5, 1, 1, 190);
+        mavLinkControl.loadMission("/path/to/some/mission.txt");
+        mavLinkControl.setMissionSendTime(System.currentTimeMillis() + 15000);
+        connHIL.addNode(mavLinkControl);
+        */
+
         // Create visualizer
         visualizer = new Visualizer(world);
         // Put camera on vehicle (FPV)
