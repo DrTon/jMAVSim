@@ -1,5 +1,6 @@
 package me.drton.jmavsim;
 
+import me.drton.jmavlib.processing.DelayLine;
 import me.drton.jmavsim.vehicle.AbstractVehicle;
 import org.mavlink.messages.MAVLinkMessage;
 import org.mavlink.messages.common.*;
@@ -24,6 +25,7 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
     private long initDelay = 1000;
     private long msgIntervalGPS = 200;
     private long msgLastGPS = 0;
+    private DelayLine<GlobalPositionVelocity> gpsDelayLine = new DelayLine<GlobalPositionVelocity>();
 
     /**
      * Create MAVLinkHILSimulator, MAVLink system thet sends simulated sensors to autopilot and passes controls from
@@ -36,7 +38,14 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
     public MAVLinkHILSystem(int sysId, int componentId, AbstractVehicle vehicle) {
         super(sysId, componentId);
         this.vehicle = vehicle;
-        msgLastGPS = System.currentTimeMillis() + 10000;
+    }
+
+    public void setGPSStartTime(long time) {
+        msgLastGPS = time;
+    }
+
+    public void setGPSDelay(long delay) {
+        gpsDelayLine.setDelay(delay);
     }
 
     @Override
@@ -94,23 +103,25 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
         sendMessage(msg_sensor);
         // GPS
         if (t - msgLastGPS > msgIntervalGPS) {
-            msgLastGPS = t;
-            msg_hil_gps msg_gps = new msg_hil_gps(sysId, componentId);
-            msg_gps.time_usec = tu;
-            GlobalPositionVelocity p = sensors.getGlobalPosition();
-            msg_gps.lat = (long) (p.position.lat * 1e7);
-            msg_gps.lon = (long) (p.position.lon * 1e7);
-            msg_gps.alt = (long) (p.position.alt * 1e3);
-            msg_gps.vn = (int) (p.velocity.x * 100);
-            msg_gps.ve = (int) (p.velocity.y * 100);
-            msg_gps.vd = (int) (p.velocity.z * 100);
-            msg_gps.eph = (int) (p.eph * 100);
-            msg_gps.epv = (int) (p.epv * 100);
-            msg_gps.vel = (int) (p.getSpeed() * 100);
-            msg_gps.cog = (int) (p.getCog() / Math.PI * 18000.0);
-            msg_gps.fix_type = p.fix;
-            msg_gps.satellites_visible = 10;
-            sendMessage(msg_gps);
+            GlobalPositionVelocity p = gpsDelayLine.getOutput(t, sensors.getGlobalPosition());
+            if (p != null) {
+                msgLastGPS = t;
+                msg_hil_gps msg_gps = new msg_hil_gps(sysId, componentId);
+                msg_gps.time_usec = tu;
+                msg_gps.lat = (long) (p.position.lat * 1e7);
+                msg_gps.lon = (long) (p.position.lon * 1e7);
+                msg_gps.alt = (long) (p.position.alt * 1e3);
+                msg_gps.vn = (int) (p.velocity.x * 100);
+                msg_gps.ve = (int) (p.velocity.y * 100);
+                msg_gps.vd = (int) (p.velocity.z * 100);
+                msg_gps.eph = (int) (p.eph * 100);
+                msg_gps.epv = (int) (p.epv * 100);
+                msg_gps.vel = (int) (p.getSpeed() * 100);
+                msg_gps.cog = (int) (p.getCog() / Math.PI * 18000.0);
+                msg_gps.fix_type = p.fix;
+                msg_gps.satellites_visible = 10;
+                sendMessage(msg_gps);
+            }
         }
     }
 

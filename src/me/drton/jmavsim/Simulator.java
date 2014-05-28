@@ -73,15 +73,20 @@ public class Simulator {
 
         // Create MAVLink HIL system
         // SysId should be the same as autopilot, ComponentId should be different!
-        connHIL.addNode(new MAVLinkHILSystem(1, 51, vehicle));
+        MAVLinkHILSystem hilSystem = new MAVLinkHILSystem(1, 51, vehicle);
+        hilSystem.setGPSDelay(200);
+        hilSystem.setGPSStartTime(System.currentTimeMillis() + 20000);
+        connHIL.addNode(hilSystem);
         world.addObject(vehicle);
 
         // Create target
+        /*
         SimpleTarget target = new SimpleTarget(world, 0.3);
         long t = System.currentTimeMillis();
         target.setTrajectory(new Vector3d(5.0, 0.0, -2.0), new Vector3d(5.0, 100.0, -2.0), t + 20000, t + 50000);
         connCommon.addNode(new MAVLinkTargetSystem(2, 1, target));
         world.addObject(target);
+        */
 
         // Create visualizer
         visualizer = new Visualizer(world);
