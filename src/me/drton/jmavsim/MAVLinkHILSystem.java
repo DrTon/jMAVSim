@@ -102,6 +102,7 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
         msg_sensor.pressure_alt = (float) sensors.getPressureAlt();
         sendMessage(msg_sensor);
         // GPS
+        gpsDelayLine.getOutput(t, sensors.getGlobalPosition());
         if (t - msgLastGPS > msgIntervalGPS) {
             GlobalPositionVelocity p = gpsDelayLine.getOutput(t, sensors.getGlobalPosition());
             if (p != null) {
