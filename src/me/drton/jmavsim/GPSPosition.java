@@ -7,7 +7,7 @@ import javax.vecmath.Vector3d;
 /**
  * User: ton Date: 01.12.13 Time: 22:25
  */
-public class GlobalPositionVelocity {
+public class GPSPosition {
     public LatLonAlt position;
     public double eph;
     public double epv;

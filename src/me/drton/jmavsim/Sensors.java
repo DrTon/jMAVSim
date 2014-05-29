@@ -16,7 +16,9 @@ public interface Sensors {
 
     double getPressureAlt();
 
-    GlobalPositionVelocity getGlobalPosition();
+    GPSPosition getGPS();
+
+    boolean isGPSUpdated();
 
     void update(long t);
 }

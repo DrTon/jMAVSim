@@ -67,6 +67,8 @@ public class Simulator {
         I.m22 = 0.009;  // Z
         vehicle.setMomentOfInertia(I);
         SimpleSensors sensors = new SimpleSensors();
+        sensors.setGPSDelay(200);
+        sensors.setGPSStartTime(System.currentTimeMillis() + 20000);
         vehicle.setSensors(sensors);
         vehicle.setDragMove(0.02);
         //v.setDragRotate(0.1);
@@ -74,8 +76,6 @@ public class Simulator {
         // Create MAVLink HIL system
         // SysId should be the same as autopilot, ComponentId should be different!
         MAVLinkHILSystem hilSystem = new MAVLinkHILSystem(1, 51, vehicle);
-        hilSystem.setGPSDelay(200);
-        hilSystem.setGPSStartTime(System.currentTimeMillis() + 20000);
         connHIL.addNode(hilSystem);
         world.addObject(vehicle);
 
