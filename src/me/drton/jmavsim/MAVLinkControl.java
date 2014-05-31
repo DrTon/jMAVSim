@@ -1,8 +1,8 @@
 package me.drton.jmavsim;
 
 import org.mavlink.messages.MAVLinkMessage;
-import org.mavlink.messages.common.msg_mission_count;
-import org.mavlink.messages.common.msg_mission_item;
+import org.mavlink.messages.px4.msg_mission_count;
+import org.mavlink.messages.px4.msg_mission_item;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

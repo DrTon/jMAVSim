@@ -1,7 +1,7 @@
 package me.drton.jmavsim;
 
 import org.mavlink.messages.MAVLinkMessage;
-import org.mavlink.messages.common.msg_heartbeat;
+import org.mavlink.messages.px4.msg_heartbeat;
 
 /**
  * MAVLinkSystem represents generic MAVLink system with SysID and ComponentID that can handle and send messages.

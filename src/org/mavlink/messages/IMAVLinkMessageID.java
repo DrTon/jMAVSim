@@ -8,6 +8,7 @@ package org.mavlink.messages;
  * Generate al MAVLink message Id in an interface
  **/
 public interface IMAVLinkMessageID {
+  public static int MAVLINK_MSG_ID_GLOBAL_POSITION_TIME = 127;
   public static int MAVLINK_MSG_ID_HIL_GPS = 113;
   public static int MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA = 54;
   public static int MAVLINK_MSG_ID_LOCAL_POSITION_NED = 32;

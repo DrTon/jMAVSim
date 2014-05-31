@@ -80,13 +80,11 @@ public class Simulator {
         world.addObject(vehicle);
 
         // Create target
-        /*
         SimpleTarget target = new SimpleTarget(world, 0.3);
         long t = System.currentTimeMillis();
         target.setTrajectory(new Vector3d(5.0, 0.0, -2.0), new Vector3d(5.0, 100.0, -2.0), t + 20000, t + 50000);
         connCommon.addNode(new MAVLinkTargetSystem(2, 1, target));
         world.addObject(target);
-        */
 
         // Create MAVLink control
         /*
