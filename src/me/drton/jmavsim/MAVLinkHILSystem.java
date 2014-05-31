@@ -16,14 +16,11 @@ import java.util.List;
  */
 public class MAVLinkHILSystem extends MAVLinkSystem {
     // MAVLinkHILSystem has the same sysID as autopilot, but different componentId
-    private int hilComponentId = -1;    // componentId of the autopilot
     private AbstractVehicle vehicle;
     private boolean gotHeartBeat = false;
     private boolean inited = false;
     private long initTime = 0;
     private long initDelay = 1000;
-    private long msgIntervalGPS = 200;
-    private long msgLastGPS = 0;
 
     /**
      * Create MAVLinkHILSimulator, MAVLink system thet sends simulated sensors to autopilot and passes controls from
@@ -36,7 +33,6 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
     public MAVLinkHILSystem(int sysId, int componentId, AbstractVehicle vehicle) {
         super(sysId, componentId);
         this.vehicle = vehicle;
-        msgLastGPS = System.currentTimeMillis() + 10000;
     }
 
     @Override
@@ -53,7 +49,6 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
         } else if (msg instanceof msg_heartbeat) {
             msg_heartbeat heartbeat = (msg_heartbeat) msg;
             if (!gotHeartBeat && sysId == heartbeat.sysId) {
-                hilComponentId = heartbeat.componentId;
                 gotHeartBeat = true;
                 initTime = t + initDelay;
             }
@@ -93,24 +88,25 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
         msg_sensor.pressure_alt = (float) sensors.getPressureAlt();
         sendMessage(msg_sensor);
         // GPS
-        if (t - msgLastGPS > msgIntervalGPS) {
-            msgLastGPS = t;
-            msg_hil_gps msg_gps = new msg_hil_gps(sysId, componentId);
-            msg_gps.time_usec = tu;
-            GlobalPositionVelocity p = sensors.getGlobalPosition();
-            msg_gps.lat = (long) (p.position.lat * 1e7);
-            msg_gps.lon = (long) (p.position.lon * 1e7);
-            msg_gps.alt = (long) (p.position.alt * 1e3);
-            msg_gps.vn = (int) (p.velocity.x * 100);
-            msg_gps.ve = (int) (p.velocity.y * 100);
-            msg_gps.vd = (int) (p.velocity.z * 100);
-            msg_gps.eph = (int) (p.eph * 100);
-            msg_gps.epv = (int) (p.epv * 100);
-            msg_gps.vel = (int) (p.getSpeed() * 100);
-            msg_gps.cog = (int) (p.getCog() / Math.PI * 18000.0);
-            msg_gps.fix_type = p.fix;
-            msg_gps.satellites_visible = 10;
-            sendMessage(msg_gps);
+        if (sensors.isGPSUpdated()) {
+            GPSPosition gps = sensors.getGPS();
+            if (gps != null && gps.position != null && gps.velocity != null) {
+                msg_hil_gps msg_gps = new msg_hil_gps(sysId, componentId);
+                msg_gps.time_usec = tu;
+                msg_gps.lat = (long) (gps.position.lat * 1e7);
+                msg_gps.lon = (long) (gps.position.lon * 1e7);
+                msg_gps.alt = (long) (gps.position.alt * 1e3);
+                msg_gps.vn = (int) (gps.velocity.x * 100);
+                msg_gps.ve = (int) (gps.velocity.y * 100);
+                msg_gps.vd = (int) (gps.velocity.z * 100);
+                msg_gps.eph = (int) (gps.eph * 100);
+                msg_gps.epv = (int) (gps.epv * 100);
+                msg_gps.vel = (int) (gps.getSpeed() * 100);
+                msg_gps.cog = (int) (gps.getCog() / Math.PI * 18000.0);
+                msg_gps.fix_type = gps.fix;
+                msg_gps.satellites_visible = 10;
+                sendMessage(msg_gps);
+            }
         }
     }
 

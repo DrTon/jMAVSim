@@ -17,17 +17,17 @@ import java.util.Map;
 public class LogPlayerSensors implements Sensors {
     private LogReader logReader = null;
     private long logStart = 0;
-    private long logStartDelay = 10000;
     private long logT = 0;
     private Vector3d acc = new Vector3d();
     private Vector3d gyro = new Vector3d();
     private Vector3d mag = new Vector3d();
     private double baroAlt;
-    private GlobalPositionVelocity gps = new GlobalPositionVelocity();
+    private GPSPosition gps = new GPSPosition();
+    private boolean gpsUpdated = false;
 
-    void openLog(String fileName) throws IOException, FormatErrorException {
+    void openLog(String fileName, long startTime) throws IOException, FormatErrorException {
         logReader = new PX4LogReader(fileName);
-        logStart = System.currentTimeMillis() - logReader.getStartMicroseconds() / 1000 + logStartDelay;
+        logStart = startTime - logReader.getStartMicroseconds() / 1000;
     }
 
     @Override
@@ -55,8 +55,15 @@ public class LogPlayerSensors implements Sensors {
     }
 
     @Override
-    public GlobalPositionVelocity getGlobalPosition() {
+    public GPSPosition getGPS() {
         return gps;
+    }
+
+    @Override
+    public boolean isGPSUpdated() {
+        boolean res = gpsUpdated;
+        gpsUpdated = false;
+        return res;
     }
 
     @Override
@@ -100,6 +107,7 @@ public class LogPlayerSensors implements Sensors {
             if (logData.containsKey("GPS.Lat") &&
                     logData.containsKey("GPS.Lon") &&
                     logData.containsKey("GPS.Alt")) {
+                gpsUpdated = true;
                 gps.position = new LatLonAlt(((Number) logData.get("GPS.Lat")).doubleValue(),
                         ((Number) logData.get("GPS.Lon")).doubleValue(),
                         ((Number) logData.get("GPS.Alt")).doubleValue());
@@ -108,7 +116,7 @@ public class LogPlayerSensors implements Sensors {
                 gps.velocity = new Vector3d(((Number) logData.get("GPS.VelN")).doubleValue(),
                         ((Number) logData.get("GPS.VelE")).doubleValue(),
                         ((Number) logData.get("GPS.VelD")).doubleValue());
-                gps.fix = (Integer) logData.get("GPS.FixType");
+                gps.fix = (Integer) logData.get("GPS.Fix");
                 gps.time = (Long) logData.get("GPS.GPSTime");
             }
         }

@@ -1,6 +1,7 @@
 package me.drton.jmavsim;
 
 import me.drton.jmavlib.geo.GlobalPositionProjector;
+import me.drton.jmavlib.processing.DelayLine;
 
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Vector3d;
@@ -11,12 +12,31 @@ import javax.vecmath.Vector3d;
 public class SimpleSensors implements Sensors {
     private DynamicObject object;
     private GlobalPositionProjector globalProjector = new GlobalPositionProjector();
+    private DelayLine<GPSPosition> gpsDelayLine = new DelayLine<GPSPosition>();
+    private long gpsStartTime = 0;
+    private long gpsInterval = 200;
+    private long gpsLast = 0;
+    private GPSPosition gps = new GPSPosition();
+    private boolean gpsUpdated = false;
 
     @Override
     public void setObject(DynamicObject object) {
         this.object = object;
         globalProjector.init(object.getWorld().getGlobalReference());
     }
+
+    public void setGPSStartTime(long time) {
+        gpsStartTime = time;
+    }
+
+    public void setGPSDelay(long delay) {
+        gpsDelayLine.setDelay(delay);
+    }
+
+    public void setGPSInterval(long gpsInterval) {
+        this.gpsInterval = gpsInterval;
+    }
+
 
     @Override
     public Vector3d getAcc() {
@@ -48,19 +68,32 @@ public class SimpleSensors implements Sensors {
     }
 
     @Override
-    public GlobalPositionVelocity getGlobalPosition() {
-        GlobalPositionVelocity p = new GlobalPositionVelocity();
-        Vector3d pos = object.getPosition();
-        p.position = globalProjector.reproject(new double[]{pos.x, pos.y, pos.z});
-        p.eph = 1.0;
-        p.epv = 1.0;
-        p.velocity = object.getVelocity();
-        p.fix = 3;
-        p.time = System.currentTimeMillis() * 1000;
-        return p;
+    public GPSPosition getGPS() {
+        return gps;
+    }
+
+    @Override
+    public boolean isGPSUpdated() {
+        boolean res = gpsUpdated;
+        gpsUpdated = false;
+        return res;
     }
 
     @Override
     public void update(long t) {
+        // GPS
+        if (t > gpsStartTime && t > gpsLast + gpsInterval) {
+            gpsLast = t;
+            gpsUpdated = true;
+            GPSPosition gpsCurrent = new GPSPosition();
+            Vector3d pos = object.getPosition();
+            gpsCurrent.position = globalProjector.reproject(new double[]{pos.x, pos.y, pos.z});
+            gpsCurrent.eph = 1.0;
+            gpsCurrent.epv = 1.0;
+            gpsCurrent.velocity = object.getVelocity();
+            gpsCurrent.fix = 3;
+            gpsCurrent.time = System.currentTimeMillis() * 1000;
+            gps = gpsDelayLine.getOutput(t, gpsCurrent);
+        }
     }
 }

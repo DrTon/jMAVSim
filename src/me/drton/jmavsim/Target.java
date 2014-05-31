@@ -20,10 +20,10 @@ public class Target extends KinematicObject {
         gpsProjector.init(world.getGlobalReference());
     }
 
-    public GlobalPositionVelocity getGlobalPosition() {
+    public GPSPosition getGlobalPosition() {
         Vector3d pos = getPosition();
         LatLonAlt latLonAlt = gpsProjector.reproject(new double[]{pos.x, pos.y, pos.z});
-        GlobalPositionVelocity gps = new GlobalPositionVelocity();
+        GPSPosition gps = new GPSPosition();
         gps.position = latLonAlt;
         gps.eph = 1.0;
         gps.epv = 1.0;

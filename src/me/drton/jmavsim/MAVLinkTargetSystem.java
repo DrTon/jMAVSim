@@ -22,7 +22,7 @@ public class MAVLinkTargetSystem extends MAVLinkSystem {
         if (t - msgLastPosition > msgIntervalPosition) {
             msgLastPosition = t;
 
-            GlobalPositionVelocity p = target.getGlobalPosition();
+            GPSPosition p = target.getGlobalPosition();
 
             msg_global_position_int msg_target = new msg_global_position_int(2, componentId);
             msg_target.time_boot_ms = t * 1000;

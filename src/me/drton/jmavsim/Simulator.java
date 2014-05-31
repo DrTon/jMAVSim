@@ -67,21 +67,35 @@ public class Simulator {
         I.m22 = 0.009;  // Z
         vehicle.setMomentOfInertia(I);
         SimpleSensors sensors = new SimpleSensors();
+        sensors.setGPSDelay(200);
+        sensors.setGPSStartTime(System.currentTimeMillis() + 20000);
         vehicle.setSensors(sensors);
         vehicle.setDragMove(0.02);
         //v.setDragRotate(0.1);
 
         // Create MAVLink HIL system
         // SysId should be the same as autopilot, ComponentId should be different!
-        connHIL.addNode(new MAVLinkHILSystem(1, 51, vehicle));
+        MAVLinkHILSystem hilSystem = new MAVLinkHILSystem(1, 51, vehicle);
+        connHIL.addNode(hilSystem);
         world.addObject(vehicle);
 
         // Create target
+        /*
         SimpleTarget target = new SimpleTarget(world, 0.3);
         long t = System.currentTimeMillis();
         target.setTrajectory(new Vector3d(5.0, 0.0, -2.0), new Vector3d(5.0, 100.0, -2.0), t + 20000, t + 50000);
         connCommon.addNode(new MAVLinkTargetSystem(2, 1, target));
         world.addObject(target);
+        */
+
+        // Create MAVLink control
+        /*
+        // TargetComponentID should be 190
+        MAVLinkControl mavLinkControl = new MAVLinkControl(5, 1, 1, 190);
+        mavLinkControl.loadMission("/path/to/some/mission.txt");
+        mavLinkControl.setMissionSendTime(System.currentTimeMillis() + 15000);
+        connHIL.addNode(mavLinkControl);
+        */
 
         // Create visualizer
         visualizer = new Visualizer(world);
