@@ -1,6 +1,6 @@
 package me.drton.jmavsim;
 
-import org.mavlink.messages.px4.msg_global_position_int;
+import org.mavlink.messages.common.msg_global_position_int;
 import org.mavlink.messages.px4.msg_global_position_time;
 
 /**

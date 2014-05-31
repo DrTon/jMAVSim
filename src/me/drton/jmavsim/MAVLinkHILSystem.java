@@ -2,7 +2,7 @@ package me.drton.jmavsim;
 
 import me.drton.jmavsim.vehicle.AbstractVehicle;
 import org.mavlink.messages.MAVLinkMessage;
-import org.mavlink.messages.px4.*;
+import org.mavlink.messages.common.*;
 
 import javax.vecmath.Vector3d;
 import java.util.Arrays;
