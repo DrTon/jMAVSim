@@ -24,7 +24,7 @@ public class MAVLinkTargetSystem extends MAVLinkSystem {
 
             GPSPosition p = target.getGlobalPosition();
 
-            msg_global_position_int msg_target = new msg_global_position_int(2, componentId);
+            msg_global_position_int msg_target = new msg_global_position_int(sysId, componentId);
             msg_target.time_boot_ms = t * 1000;
             msg_target.lat = (long) (p.position.lat * 1e7);
             msg_target.lon = (long) (p.position.lon * 1e7);
@@ -34,7 +34,7 @@ public class MAVLinkTargetSystem extends MAVLinkSystem {
             msg_target.vz = (int) (p.velocity.z * 100);
             sendMessage(msg_target);
 
-            msg_global_position_time msg_target_time = new msg_global_position_time(2, componentId);
+            msg_global_position_time msg_target_time = new msg_global_position_time(sysId, componentId);
             msg_target_time.time = t * 1000;
             msg_target_time.lat = (long) (p.position.lat * 1e7);
             msg_target_time.lon = (long) (p.position.lon * 1e7);
