@@ -2,3 +2,6 @@
 	path = jMAVlib
 	url = https://github.com/DrTon/jMAVlib.git
 	branch = master
+[submodule "la4j"]
+	path = la4j
+	url = https://github.com/vkostyukov/la4j.git

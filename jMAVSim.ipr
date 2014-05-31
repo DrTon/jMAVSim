@@ -182,6 +182,7 @@
     <mapping directory="" vcs="" />
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/jMAVlib" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/la4j" vcs="Git" />
   </component>
   <component name="libraryTable">
     <library name="lib">
