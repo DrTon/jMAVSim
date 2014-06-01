@@ -54,6 +54,7 @@ public class MAVLinkControl extends MAVLinkSystem {
                 mission_item.current = (missionItemId == 0) ? 1 : 0;
                 mission_item.command = item.command;
                 mission_item.frame = item.frame;
+                mission_item.autocontinue = item.autocontinue;
                 mission_item.param1 = item.param1;
                 mission_item.param2 = item.param2;
                 mission_item.param3 = item.param3;
@@ -61,6 +62,7 @@ public class MAVLinkControl extends MAVLinkSystem {
                 mission_item.x = item.x;
                 mission_item.y = item.y;
                 mission_item.z = item.z;
+                mission_item.autocontinue = item.autocontinue;
                 sendMessage(mission_item);
                 missionItemId++;
                 missionSendTime = t + sendInterval;
@@ -92,7 +94,7 @@ public class MAVLinkControl extends MAVLinkSystem {
             String[] a = line.split("[ \t]+");
             mission.add(new MAVLinkMissionItem(Integer.parseInt(a[2]), Integer.parseInt(a[3]), Float.parseFloat(a[4]),
                     Float.parseFloat(a[5]), Float.parseFloat(a[6]), Float.parseFloat(a[7]), Float.parseFloat(a[8]),
-                    Float.parseFloat(a[9]), Float.parseFloat(a[10])));
+                    Float.parseFloat(a[9]), Float.parseFloat(a[10]), Integer.parseInt(a[11])));
         }
         fileReader.close();
     }
