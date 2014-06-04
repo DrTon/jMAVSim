@@ -1,19 +1,24 @@
 package me.drton.jmavsim;
 
-import org.mavlink.messages.MAVLinkMessage;
+import me.drton.jmavlib.mavlink.MAVLinkMessage;
+import me.drton.jmavlib.mavlink.MAVLinkSchema;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 
 /**
  * User: ton Date: 21.03.14 Time: 13:44
  */
 public class MavlinkTest {
-    public static void main(String[] args) throws InterruptedException, IOException {
+    public static void main(String[] args)
+            throws InterruptedException, IOException, ParserConfigurationException, SAXException {
         World world = new World();
+        MAVLinkSchema schema = new MAVLinkSchema("mavlink/message_definitions/common.xml");
         MAVLinkConnection connection = new MAVLinkConnection(world);
-        SerialMAVLinkPort port = new SerialMAVLinkPort();
+        SerialMAVLinkPort port = new SerialMAVLinkPort(schema);
         connection.addNode(port);
-        MAVLinkNode node = new MAVLinkNode() {
+        MAVLinkNode node = new MAVLinkNode(schema) {
             @Override
             public void handleMessage(MAVLinkMessage msg) {
                 System.out.println(msg);
@@ -24,9 +29,11 @@ public class MavlinkTest {
             }
         };
         connection.addNode(node);
-        port.open("/dev/tty.usbserial-DN006L8F", 57600, 8, 1, 0);
+        port.open("/dev/tty.usbmodem1", 57600, 8, 1, 0);
+        port.sendRaw("\nsh /etc/init.d/rc.usb\n".getBytes());
         while (true) {
             port.update(System.currentTimeMillis());
+            Thread.sleep(10);
         }
     }
 }

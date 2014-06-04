@@ -1,12 +1,14 @@
 package me.drton.jmavsim;
 
 import me.drton.jmavlib.geo.LatLonAlt;
+import me.drton.jmavlib.mavlink.MAVLinkSchema;
 import me.drton.jmavsim.vehicle.AbstractMulticopter;
 import me.drton.jmavsim.vehicle.Quadcopter;
-import org.mavlink.messages.IMAVLinkMessageID;
+import org.xml.sax.SAXException;
 
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Vector3d;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
@@ -20,28 +22,30 @@ public class Simulator {
     private int visualizerSleepInterval = 20;
     private long nextRun = 0;
 
-    public Simulator() throws IOException, InterruptedException {
+    public Simulator() throws IOException, InterruptedException, ParserConfigurationException, SAXException {
         // Create world
         world = new World();
         world.setGlobalReference(new LatLonAlt(55.753395, 37.625427, 0.0));
+
+        MAVLinkSchema schema = new MAVLinkSchema("mavlink/message_definitions/common.xml");
 
         // Create MAVLink connections
         MAVLinkConnection connHIL = new MAVLinkConnection(world);
         world.addObject(connHIL);
         MAVLinkConnection connCommon = new MAVLinkConnection(world);
         // Don't spam ground station with HIL messages
-        connCommon.addSkipMessage(IMAVLinkMessageID.MAVLINK_MSG_ID_HIL_CONTROLS);
-        connCommon.addSkipMessage(IMAVLinkMessageID.MAVLINK_MSG_ID_HIL_SENSOR);
-        connCommon.addSkipMessage(IMAVLinkMessageID.MAVLINK_MSG_ID_HIL_GPS);
+        connCommon.addSkipMessage(schema.getMessageDefinition("HIL_CONTROLS").id);
+        connCommon.addSkipMessage(schema.getMessageDefinition("HIL_SENSOR").id);
+        connCommon.addSkipMessage(schema.getMessageDefinition("HIL_GPS").id);
         world.addObject(connCommon);
 
         // Create ports
         // Serial port: connection to autopilot
-        SerialMAVLinkPort serialMAVLinkPort = new SerialMAVLinkPort();
+        SerialMAVLinkPort serialMAVLinkPort = new SerialMAVLinkPort(schema);
         connCommon.addNode(serialMAVLinkPort);
         connHIL.addNode(serialMAVLinkPort);
         // UDP port: connection to ground station
-        UDPMavLinkPort udpMavLinkPort = new UDPMavLinkPort();
+        UDPMavLinkPort udpMavLinkPort = new UDPMavLinkPort(schema);
         connCommon.addNode(udpMavLinkPort);
 
         // Create environment
@@ -75,7 +79,7 @@ public class Simulator {
 
         // Create MAVLink HIL system
         // SysId should be the same as autopilot, ComponentId should be different!
-        MAVLinkHILSystem hilSystem = new MAVLinkHILSystem(1, 51, vehicle);
+        MAVLinkHILSystem hilSystem = new MAVLinkHILSystem(schema, 1, 51, vehicle);
         connHIL.addNode(hilSystem);
         world.addObject(vehicle);
 
@@ -159,7 +163,8 @@ public class Simulator {
         }
     }
 
-    public static void main(String[] args) throws InterruptedException, IOException {
+    public static void main(String[] args)
+            throws InterruptedException, IOException, ParserConfigurationException, SAXException {
         new Simulator();
     }
 }

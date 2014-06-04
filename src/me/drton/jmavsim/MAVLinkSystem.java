@@ -1,7 +1,7 @@
 package me.drton.jmavsim;
 
-import org.mavlink.messages.MAVLinkMessage;
-import org.mavlink.messages.common.msg_heartbeat;
+import me.drton.jmavlib.mavlink.MAVLinkMessage;
+import me.drton.jmavlib.mavlink.MAVLinkSchema;
 
 /**
  * MAVLinkSystem represents generic MAVLink system with SysID and ComponentID that can handle and send messages.
@@ -14,7 +14,8 @@ public class MAVLinkSystem extends MAVLinkNode {
     private long heartbeatInterval = 1000;
     private long heartbeatLast = 0;
 
-    public MAVLinkSystem(int sysId, int componentId) {
+    public MAVLinkSystem(MAVLinkSchema schema, int sysId, int componentId) {
+        super(schema);
         this.sysId = sysId;
         this.componentId = componentId;
     }
@@ -27,8 +28,8 @@ public class MAVLinkSystem extends MAVLinkNode {
     public void update(long t) {
         if (t - heartbeatLast >= heartbeatInterval) {
             heartbeatLast = t;
-            msg_heartbeat msg = new msg_heartbeat(sysId, componentId);
-            msg.mavlink_version = 3;
+            MAVLinkMessage msg = new MAVLinkMessage(schema, "HEARTBEAT", sysId, componentId);
+            msg.set("mavlink_version", 3);
             sendMessage(msg);
         }
     }
