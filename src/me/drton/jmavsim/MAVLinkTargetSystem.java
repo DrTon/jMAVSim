@@ -32,14 +32,14 @@ public class MAVLinkTargetSystem extends MAVLinkSystem {
             msg_target.set("vz", (int) (p.velocity.z * 100));
             sendMessage(msg_target);
 
-            msg_global_position_time msg_target_time = new msg_global_position_time(sysId, componentId);
-            msg_target_time.time = t * 1000;
-            msg_target_time.lat = (long) (p.position.lat * 1e7);
-            msg_target_time.lon = (long) (p.position.lon * 1e7);
-            msg_target_time.alt = (float) (p.position.alt);
-            msg_target_time.vx = (float) p.velocity.x;
-            msg_target_time.vy = (float) p.velocity.y;
-            msg_target_time.vz = (float) p.velocity.z;
+            MAVLinkMessage msg_target_time = new MAVLinkMessage(schema, "GLOBAL_POSITION_TIME", sysId, componentId);
+            msg_target_time.set("time", t * 1000);
+            msg_target_time.set("lat", (long) (p.position.lat * 1e7));
+            msg_target_time.set("lon", (long) (p.position.lon * 1e7));
+            msg_target_time.set("alt", (float) (p.position.alt));
+            msg_target_time.set("vx", (float) p.velocity.x);
+            msg_target_time.set("vy", (float) p.velocity.y);
+            msg_target_time.set("vz", (float) p.velocity.z);
             sendMessage(msg_target_time);
         }
     }

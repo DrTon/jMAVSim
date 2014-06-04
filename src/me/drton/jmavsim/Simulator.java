@@ -27,7 +27,7 @@ public class Simulator {
         world = new World();
         world.setGlobalReference(new LatLonAlt(55.753395, 37.625427, 0.0));
 
-        MAVLinkSchema schema = new MAVLinkSchema("mavlink/message_definitions/common.xml");
+        MAVLinkSchema schema = new MAVLinkSchema("mavlink/message_definitions/px4.xml");
 
         // Create MAVLink connections
         MAVLinkConnection connHIL = new MAVLinkConnection(world);
@@ -87,7 +87,7 @@ public class Simulator {
         SimpleTarget target = new SimpleTarget(world, 0.3);
         long t = System.currentTimeMillis();
         target.setTrajectory(new Vector3d(5.0, 0.0, -2.0), new Vector3d(5.0, 100.0, -2.0), t + 20000, t + 50000);
-        connCommon.addNode(new MAVLinkTargetSystem(2, 1, target));
+        connCommon.addNode(new MAVLinkTargetSystem(schema, 2, 1, target));
         world.addObject(target);
 
         // Create MAVLink control
