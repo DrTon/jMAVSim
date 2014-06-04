@@ -22,13 +22,13 @@ public class UDPMavLinkPort extends MAVLinkPort {
     public UDPMavLinkPort(MAVLinkSchema schema) {
         super(schema);
         this.schema = schema;
+        rxBuffer.flip();
     }
 
     public void open(SocketAddress address) throws IOException {
         channel = DatagramChannel.open();
         channel.socket().bind(address);
         channel.configureBlocking(false);
-        rxBuffer.flip();
         stream = new MAVLinkStream(schema);
     }
 
@@ -61,11 +61,14 @@ public class UDPMavLinkPort extends MAVLinkPort {
         while (isOpened()) {
             try {
                 rxBuffer.compact();
-                channel.receive(rxBuffer);
+                SocketAddress addr = channel.receive(rxBuffer);
                 rxBuffer.flip();
                 msg = stream.read(rxBuffer);
                 if (msg == null) {
                     break;
+                }
+                if (addr != null) {
+                    sendAddress = addr;
                 }
                 sendMessage(msg);
             } catch (IOException e) {
