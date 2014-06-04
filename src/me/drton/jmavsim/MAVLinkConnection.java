@@ -1,6 +1,6 @@
 package me.drton.jmavsim;
 
-import org.mavlink.messages.MAVLinkMessage;
+import me.drton.jmavlib.mavlink.MAVLinkMessage;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -28,7 +28,7 @@ public class MAVLinkConnection extends WorldObject {
     }
 
     public void sendMessage(MAVLinkNode sender, MAVLinkMessage msg) {
-        if (skipMessages.contains(msg.messageType)) {
+        if (skipMessages.contains(msg.getMsgType())) {
             return;
         }
         for (MAVLinkNode node : nodes) {

@@ -1,8 +1,8 @@
 package me.drton.jmavsim;
 
+import me.drton.jmavlib.mavlink.MAVLinkMessage;
+import me.drton.jmavlib.mavlink.MAVLinkSchema;
 import me.drton.jmavsim.vehicle.AbstractVehicle;
-import org.mavlink.messages.MAVLinkMessage;
-import org.mavlink.messages.px4.*;
 
 import javax.vecmath.Vector3d;
 import java.util.Arrays;
@@ -30,8 +30,8 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
      * @param componentId ComponentId of simulator should be different from autopilot
      * @param vehicle
      */
-    public MAVLinkHILSystem(int sysId, int componentId, AbstractVehicle vehicle) {
-        super(sysId, componentId);
+    public MAVLinkHILSystem(MAVLinkSchema schema, int sysId, int componentId, AbstractVehicle vehicle) {
+        super(schema, sysId, componentId);
         this.vehicle = vehicle;
     }
 
@@ -39,16 +39,13 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
     public void handleMessage(MAVLinkMessage msg) {
         super.handleMessage(msg);
         long t = System.currentTimeMillis();
-        if (msg instanceof msg_hil_controls) {
-            msg_hil_controls hil_controls = (msg_hil_controls) msg;
-            List<Double> control = Arrays.asList((double) hil_controls.roll_ailerons,
-                    (double) hil_controls.pitch_elevator, (double) hil_controls.yaw_rudder,
-                    (double) hil_controls.throttle, (double) hil_controls.aux1, (double) hil_controls.aux2,
-                    (double) hil_controls.aux3, (double) hil_controls.aux4);
+        if ("HIL_CONTROLS".equals(msg.getMsgName())) {
+            List<Double> control = Arrays.asList(msg.getDouble("roll_ailerons"), msg.getDouble("pitch_elevator"),
+                    msg.getDouble("yaw_rudder"), msg.getDouble("throttle"), msg.getDouble("aux1"),
+                    msg.getDouble("aux2"), msg.getDouble("aux3"), msg.getDouble("aux4"));
             vehicle.setControl(control);
-        } else if (msg instanceof msg_heartbeat) {
-            msg_heartbeat heartbeat = (msg_heartbeat) msg;
-            if (!gotHeartBeat && sysId == heartbeat.sysId) {
+        } else if ("HEARTBEAT".equals(msg.getMsgName())) {
+            if (!gotHeartBeat && sysId == msg.getInt(sysId)) {
                 gotHeartBeat = true;
                 initTime = t + initDelay;
             }
@@ -57,11 +54,11 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
                 initMavLink();
                 inited = true;
             }
-            if ((heartbeat.base_mode & 128) == 0) {
+            if ((msg.getInt("base_mode") & 128) == 0) {
                 vehicle.setControl(Collections.<Double>emptyList());
             }
-        } else if (msg instanceof msg_statustext) {
-            System.out.println("MSG: " + ((msg_statustext) msg).getText());
+        } else if ("STATUSTEXT".equals(msg.getMsgName())) {
+            System.out.println("MSG: " + msg.getString("text"));
         }
     }
 
@@ -71,40 +68,40 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
         long tu = t * 1000;
         Sensors sensors = vehicle.getSensors();
         // Sensors
-        msg_hil_sensor msg_sensor = new msg_hil_sensor(sysId, componentId);
-        msg_sensor.time_usec = tu;
+        MAVLinkMessage msg_sensor = new MAVLinkMessage(schema, "HIL_SENSOR", sysId, componentId);
+        msg_sensor.set("time_usec", tu);
         Vector3d acc = sensors.getAcc();
-        msg_sensor.xacc = (float) acc.x;
-        msg_sensor.yacc = (float) acc.y;
-        msg_sensor.zacc = (float) acc.z;
+        msg_sensor.set("xacc", acc.x);
+        msg_sensor.set("yacc", acc.y);
+        msg_sensor.set("zacc", acc.z);
         Vector3d gyro = sensors.getGyro();
-        msg_sensor.xgyro = (float) gyro.x;
-        msg_sensor.ygyro = (float) gyro.y;
-        msg_sensor.zgyro = (float) gyro.z;
+        msg_sensor.set("xgyro", gyro.x);
+        msg_sensor.set("ygyro", gyro.y);
+        msg_sensor.set("zgyro", gyro.z);
         Vector3d mag = sensors.getMag();
-        msg_sensor.xmag = (float) mag.x;
-        msg_sensor.ymag = (float) mag.y;
-        msg_sensor.zmag = (float) mag.z;
-        msg_sensor.pressure_alt = (float) sensors.getPressureAlt();
+        msg_sensor.set("xmag", mag.x);
+        msg_sensor.set("ymag", mag.y);
+        msg_sensor.set("zmag", mag.z);
+        msg_sensor.set("pressure_alt", sensors.getPressureAlt());
         sendMessage(msg_sensor);
         // GPS
         if (sensors.isGPSUpdated()) {
             GPSPosition gps = sensors.getGPS();
             if (gps != null && gps.position != null && gps.velocity != null) {
-                msg_hil_gps msg_gps = new msg_hil_gps(sysId, componentId);
-                msg_gps.time_usec = tu;
-                msg_gps.lat = (long) (gps.position.lat * 1e7);
-                msg_gps.lon = (long) (gps.position.lon * 1e7);
-                msg_gps.alt = (long) (gps.position.alt * 1e3);
-                msg_gps.vn = (int) (gps.velocity.x * 100);
-                msg_gps.ve = (int) (gps.velocity.y * 100);
-                msg_gps.vd = (int) (gps.velocity.z * 100);
-                msg_gps.eph = (int) (gps.eph * 100);
-                msg_gps.epv = (int) (gps.epv * 100);
-                msg_gps.vel = (int) (gps.getSpeed() * 100);
-                msg_gps.cog = (int) (gps.getCog() / Math.PI * 18000.0);
-                msg_gps.fix_type = gps.fix;
-                msg_gps.satellites_visible = 10;
+                MAVLinkMessage msg_gps = new MAVLinkMessage(schema, "HIL_GPS", sysId, componentId);
+                msg_gps.set("time_usec", tu);
+                msg_gps.set("lat", (long) (gps.position.lat * 1e7));
+                msg_gps.set("lon", (long) (gps.position.lon * 1e7));
+                msg_gps.set("alt", (long) (gps.position.alt * 1e3));
+                msg_gps.set("vn", (int) (gps.velocity.x * 100));
+                msg_gps.set("ve", (int) (gps.velocity.y * 100));
+                msg_gps.set("vd", (int) (gps.velocity.z * 100));
+                msg_gps.set("eph", (int) (gps.eph * 100));
+                msg_gps.set("epv", (int) (gps.epv * 100));
+                msg_gps.set("vel", (int) (gps.getSpeed() * 100));
+                msg_gps.set("cog", (int) (gps.getCog() / Math.PI * 18000.0));
+                msg_gps.set("fix_type", gps.fix);
+                msg_gps.set("satellites_visible", 10);
                 sendMessage(msg_gps);
             }
         }
@@ -112,9 +109,9 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
 
     private void initMavLink() {
         // Set HIL mode
-        msg_set_mode msg = new msg_set_mode(sysId, componentId);
-        msg.target_system = sysId;
-        msg.base_mode = 32;     // HIL, disarmed
+        MAVLinkMessage msg = new MAVLinkMessage(schema, "SET_MODE", sysId, componentId);
+        msg.set("target_system", sysId);
+        msg.set("base_mode", 32);     // HIL, disarmed
         sendMessage(msg);
     }
 }

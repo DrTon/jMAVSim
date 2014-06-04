@@ -2,21 +2,27 @@ package me.drton.jmavsim;
 
 import jssc.SerialPort;
 import jssc.SerialPortException;
-import org.mavlink.IMAVLinkMessage;
-import org.mavlink.MAVLinkReader;
-import org.mavlink.messages.MAVLinkMessage;
+import me.drton.jmavlib.mavlink.MAVLinkMessage;
+import me.drton.jmavlib.mavlink.MAVLinkSchema;
+import me.drton.jmavlib.mavlink.MAVLinkStream;
 
-import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.ByteChannel;
 
 /**
  * User: ton Date: 28.11.13 Time: 23:30
  */
 public class SerialMAVLinkPort extends MAVLinkPort {
+    private MAVLinkSchema schema;
     private SerialPort serialPort;
-    private MAVLinkReader reader;
-    private long bytesReceived = 0;
+    private ByteChannel channel = null;
+    private MAVLinkStream stream;
+
+    public SerialMAVLinkPort(MAVLinkSchema schema) {
+        super(schema);
+        this.schema = schema;
+    }
 
     public void open(String portName, int baudRate, int dataBits, int stopBits, int parity) throws IOException {
         serialPort = new SerialPort(portName);
@@ -26,28 +32,52 @@ public class SerialMAVLinkPort extends MAVLinkPort {
         } catch (SerialPortException e) {
             throw new IOException(e);
         }
-        DataInputStream inputStream = new DataInputStream(new InputStream() {
+        channel = new ByteChannel() {
             @Override
-            public int read() throws IOException {
+            public int read(ByteBuffer buffer) throws IOException {
                 try {
-                    byte[] b = serialPort.readBytes(1);
-                    bytesReceived++;
-                    return b[0] & 0xff;
+                    int available = serialPort.getInputBufferBytesCount();
+                    if (available <= 0) {
+                        return 0;
+                    }
+                    byte[] b = serialPort.readBytes(Math.min(available,buffer.remaining()));
+                    if (b != null) {
+                        buffer.put(b);
+                        return b.length;
+                    } else {
+                        return 0;
+                    }
                 } catch (SerialPortException e) {
                     throw new IOException(e);
                 }
             }
 
             @Override
-            public int available() throws IOException {
+            public int write(ByteBuffer buffer) throws IOException {
                 try {
-                    return serialPort.getInputBufferBytesCount();
+                    byte[] b = new byte[buffer.remaining()];
+                    buffer.get(b);
+                    return serialPort.writeBytes(b) ? b.length : 0;
                 } catch (SerialPortException e) {
                     throw new IOException(e);
                 }
             }
-        });
-        reader = new MAVLinkReader(inputStream, IMAVLinkMessage.MAVPROT_PACKET_START_V10);
+
+            @Override
+            public boolean isOpen() {
+                return serialPort.isOpened();
+            }
+
+            @Override
+            public void close() throws IOException {
+                try {
+                    serialPort.closePort();
+                } catch (SerialPortException e) {
+                    throw new IOException(e);
+                }
+            }
+        };
+        stream = new MAVLinkStream(schema);
     }
 
     @Override
@@ -69,7 +99,7 @@ public class SerialMAVLinkPort extends MAVLinkPort {
     public void handleMessage(MAVLinkMessage msg) {
         if (isOpened()) {
             try {
-                serialPort.writeBytes(msg.encode());
+                stream.write(msg, channel);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -80,10 +110,16 @@ public class SerialMAVLinkPort extends MAVLinkPort {
     public void update(long t) {
         MAVLinkMessage msg;
         while (isOpened()) {
-            msg = reader.getNextMessageWithoutBlocking();
-            if (msg == null)
-                break;
-            sendMessage(msg);
+            try {
+                msg = stream.read(channel);
+                if (msg == null) {
+                    break;
+                }
+                sendMessage(msg);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return;
+            }
         }
     }
 
