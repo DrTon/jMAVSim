@@ -17,6 +17,22 @@ public class MAVLinkTargetSystem extends MAVLinkSystem {
     }
 
     @Override
+    public void handleMessage(MAVLinkMessage msg) {
+        super.handleMessage(msg);
+        if ("PARAM_REQUEST_LIST".equals(msg.getMsgName())) {
+            int target_system = msg.getInt("target_system");
+            int target_component = msg.getInt("target_component");
+            if (target_system == sysId && (target_component == componentId || target_component == 0)) {
+                MAVLinkMessage reply = new MAVLinkMessage(schema, "PARAM_VALUE", sysId, componentId);
+                reply.set("param_count", 1);
+                reply.set("param_id", "DUMMY");
+                reply.set("param_type", 9);
+                sendMessage(reply);
+            }
+        }
+    }
+
+    @Override
     public void update(long t) {
         super.update(t);
         if (t - msgLastPosition > msgIntervalPosition) {
