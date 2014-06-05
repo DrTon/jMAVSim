@@ -4,6 +4,7 @@ import me.drton.jmavlib.log.FormatErrorException;
 import me.drton.jmavlib.log.LogReader;
 import me.drton.jmavlib.log.PX4LogReader;
 
+import javax.vecmath.Vector3d;
 import java.io.EOFException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -18,6 +19,7 @@ public class LogPlayerTarget extends Target {
     private long logStart = 0;
     private long timeStart = 0;
     private long logT = 0;
+    private Vector3d positionOffset = new Vector3d();
 
     public LogPlayerTarget(World world, double size) throws FileNotFoundException {
         super(world, size);
@@ -30,6 +32,10 @@ public class LogPlayerTarget extends Target {
 
     public void setTimeStart(long timeStart) {
         this.timeStart = timeStart;
+    }
+
+    public void setPositionOffset(Vector3d positionOffset) {
+        this.positionOffset = positionOffset;
     }
 
     @Override
@@ -52,8 +58,8 @@ public class LogPlayerTarget extends Target {
             if (logData.containsKey("LPOS.X") &&
                     logData.containsKey("LPOS.Y") &&
                     logData.containsKey("LPOS.Z")) {
-                position.set((Float) logData.get("LPOS.X"), (Float) logData.get("LPOS.Y"),
-                        (Float) logData.get("LPOS.Z"));
+                position.add(new Vector3d((Float) logData.get("LPOS.X"), (Float) logData.get("LPOS.Y"),
+                        (Float) logData.get("LPOS.Z")), positionOffset);
             }
             if (logData.containsKey("LPOS.VX") &&
                     logData.containsKey("LPOS.VY") &&
