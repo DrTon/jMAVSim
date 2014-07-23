@@ -35,8 +35,6 @@
             <zipfileset includes="**/*.class" src="lib/j3dutils.jar"/>
             <zipfileset includes="**/*.class" src="lib/vecmath.jar"/>
             <zipfileset includes="**/*.class" src="lib/jssc.jar"/>
-            <zipfileset includes="**/*.class" src="lib/org.mavlink.library-1.0.0.jar"/>
-            <zipfileset includes="**/*.class" src="lib/org.mavlink.util-1.0.0.jar"/>
         </jar>
     </target>
 
