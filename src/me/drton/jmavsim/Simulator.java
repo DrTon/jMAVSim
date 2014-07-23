@@ -93,9 +93,9 @@ public class Simulator {
         */
 
         // Create MAVLink control
-        /*
         // TargetComponentID should be 190
-        MAVLinkControl mavLinkControl = new MAVLinkControl(5, 1, 1, 190);
+        /*
+        MAVLinkControl mavLinkControl = new MAVLinkControl(schema, 5, 1, 1, 190);
         mavLinkControl.loadMission("/path/to/some/mission.txt");
         mavLinkControl.setMissionSendTime(System.currentTimeMillis() + 15000);
         connHIL.addNode(mavLinkControl);
