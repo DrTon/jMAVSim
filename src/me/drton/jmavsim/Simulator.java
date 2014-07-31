@@ -18,7 +18,7 @@ import java.net.InetSocketAddress;
 public class Simulator {
     private World world;
     private Visualizer visualizer;
-    private int sleepInterval = 10;
+    private int sleepInterval = 5;
     private int visualizerSleepInterval = 20;
     private long nextRun = 0;
 
