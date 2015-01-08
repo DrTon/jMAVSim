@@ -36,7 +36,7 @@
             <zipfileset includes="**/*.class" src="lib/j3dcore.jar" />
             <zipfileset includes="**/*.class" src="lib/j3dutils.jar"/>
             <zipfileset includes="**/*.class" src="lib/vecmath.jar"/>
-            <zipfileset includes="**/*.class" src="lib/jssc.jar"/>
+            <zipfileset src="lib/jssc.jar"/>
         </jar>
     </target>
 
