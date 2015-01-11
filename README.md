@@ -11,11 +11,14 @@ Installation
 ### Linux
 
 #### Arch Linux
-
+```
 git clone https://github.com/DrTon/jMAVSim
+git submodule init
+git submodule update
 
 sudo pacman -S jdk7-openjdk
 
 yaourt -S java3d
 cp /jre/lib/ext/j3dcore.jar /home/USERNAME/src/jMAVSim/lib/j3dcore.jar
 cp /jre/lib/amd64/libj3dcore-ogl.so /home/USERNAME/src/jMAVSim/
+```
