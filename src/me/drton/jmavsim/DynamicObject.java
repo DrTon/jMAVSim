@@ -37,6 +37,9 @@ public abstract class DynamicObject extends KinematicObject {
     public void update(long t) {
         if (lastTime >= 0) {
             double dt = (t - lastTime) / 1000.0;
+            if (dt < 0.001) {
+                dt = 0.001; // Limit min dt to 1ms
+            }
             // Position
             Vector3d dPos = new Vector3d(velocity);
             dPos.scale(dt);
