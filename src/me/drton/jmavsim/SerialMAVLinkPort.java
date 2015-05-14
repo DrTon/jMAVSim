@@ -77,7 +77,7 @@ public class SerialMAVLinkPort extends MAVLinkPort {
                 }
             }
         };
-        stream = new MAVLinkStream(schema);
+        stream = new MAVLinkStream(schema, channel);
     }
 
     @Override
@@ -99,7 +99,7 @@ public class SerialMAVLinkPort extends MAVLinkPort {
     public void handleMessage(MAVLinkMessage msg) {
         if (isOpened()) {
             try {
-                stream.write(msg, channel);
+                stream.write(msg);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -111,7 +111,7 @@ public class SerialMAVLinkPort extends MAVLinkPort {
         MAVLinkMessage msg;
         while (isOpened()) {
             try {
-                msg = stream.read(channel);
+                msg = stream.read();
                 if (msg == null) {
                     break;
                 }

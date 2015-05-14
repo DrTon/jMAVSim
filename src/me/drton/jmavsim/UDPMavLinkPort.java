@@ -17,7 +17,6 @@ public class UDPMavLinkPort extends MAVLinkPort {
     private DatagramChannel channel = null;
     private ByteBuffer rxBuffer = ByteBuffer.allocate(8192);
     private MAVLinkStream stream;
-    private SocketAddress sendAddress;
 
     public UDPMavLinkPort(MAVLinkSchema schema) {
         super(schema);
@@ -25,11 +24,12 @@ public class UDPMavLinkPort extends MAVLinkPort {
         rxBuffer.flip();
     }
 
-    public void open(SocketAddress address) throws IOException {
+    public void open(SocketAddress bindAddress, SocketAddress peerAddress) throws IOException {
         channel = DatagramChannel.open();
-        channel.socket().bind(address);
+        channel.socket().bind(bindAddress);
         channel.configureBlocking(false);
-        stream = new MAVLinkStream(schema);
+        channel.connect(peerAddress);
+        stream = new MAVLinkStream(schema, channel);
     }
 
     @Override
@@ -46,9 +46,9 @@ public class UDPMavLinkPort extends MAVLinkPort {
 
     @Override
     public void handleMessage(MAVLinkMessage msg) {
-        if (isOpened() && sendAddress != null) {
+        if (isOpened()) {
             try {
-                channel.send(stream.write(msg), sendAddress);
+                stream.write(msg);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -57,18 +57,11 @@ public class UDPMavLinkPort extends MAVLinkPort {
 
     @Override
     public void update(long t) {
-        MAVLinkMessage msg;
         while (isOpened()) {
             try {
-                rxBuffer.compact();
-                SocketAddress addr = channel.receive(rxBuffer);
-                rxBuffer.flip();
-                msg = stream.read(rxBuffer);
+                MAVLinkMessage msg = stream.read();
                 if (msg == null) {
                     break;
-                }
-                if (addr != null) {
-                    sendAddress = addr;
                 }
                 sendMessage(msg);
             } catch (IOException e) {
@@ -76,9 +69,5 @@ public class UDPMavLinkPort extends MAVLinkPort {
                 return;
             }
         }
-    }
-
-    public void setSendAddress(SocketAddress sendAddress) {
-        this.sendAddress = sendAddress;
     }
 }
