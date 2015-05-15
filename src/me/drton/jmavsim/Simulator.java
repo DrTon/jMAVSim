@@ -10,12 +10,17 @@ import javax.vecmath.Matrix3d;
 import javax.vecmath.Vector3d;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.HashMap;
 
 /**
  * User: ton Date: 26.11.13 Time: 12:33
  */
 public class Simulator {
+
+    public static final boolean USE_SERIAL_PORT = false;
+
     private World world;
     private Visualizer visualizer;
     private int sleepInterval = 5;
@@ -40,13 +45,25 @@ public class Simulator {
         world.addObject(connCommon);
 
         // Create ports
-        // Serial port: connection to autopilot
-        SerialMAVLinkPort serialMAVLinkPort = new SerialMAVLinkPort(schema);
-        connCommon.addNode(serialMAVLinkPort);
-        connHIL.addNode(serialMAVLinkPort);
+        MAVLinkPort autopilotMavLinkPort;
+        if (USE_SERIAL_PORT) {
+            //Serial port: connection to autopilot over serial.
+            SerialMAVLinkPort port = new SerialMAVLinkPort(schema);
+            port.setup("/dev/tty.usbmodem1", 230400, 8, 1, 0);
+            autopilotMavLinkPort = port;
+        } else {
+            UDPMavLinkPort port = new UDPMavLinkPort(schema);
+            port.setup(14550, true);
+            autopilotMavLinkPort = port;
+        }
+
+        // allow HIL and GCS to talk to this port
+        connHIL.addNode(autopilotMavLinkPort);
+        connCommon.addNode(autopilotMavLinkPort);
         // UDP port: connection to ground station
-        UDPMavLinkPort udpMavLinkPort = new UDPMavLinkPort(schema);
-        connCommon.addNode(udpMavLinkPort);
+        UDPMavLinkPort udpGCMavLinkPort = new UDPMavLinkPort(schema);
+        udpGCMavLinkPort.setup(14555, false);
+        connCommon.addNode(udpGCMavLinkPort);
 
         // Create environment
         SimpleEnvironment simpleEnvironment = new SimpleEnvironment(world);
@@ -123,9 +140,8 @@ public class Simulator {
         */
 
         // Open ports
-        serialMAVLinkPort.open("/dev/tty.usbmodem1", 230400, 8, 1, 0);
-        serialMAVLinkPort.sendRaw("\nsh /etc/init.d/rc.usb\n".getBytes());
-        udpMavLinkPort.open(new InetSocketAddress(14555));
+        autopilotMavLinkPort.open();
+        udpGCMavLinkPort.open();
 
         // Run
         try {
@@ -135,8 +151,8 @@ public class Simulator {
         }
 
         // Close ports
-        serialMAVLinkPort.close();
-        udpMavLinkPort.close();
+        autopilotMavLinkPort.close();
+        udpGCMavLinkPort.close();
     }
 
     public void run() throws IOException, InterruptedException {

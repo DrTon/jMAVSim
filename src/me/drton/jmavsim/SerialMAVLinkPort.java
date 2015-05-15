@@ -9,22 +9,39 @@ import me.drton.jmavlib.mavlink.MAVLinkStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
+import java.util.Map;
 
 /**
  * User: ton Date: 28.11.13 Time: 23:30
  */
 public class SerialMAVLinkPort extends MAVLinkPort {
+
     private MAVLinkSchema schema;
     private SerialPort serialPort;
     private ByteChannel channel = null;
     private MAVLinkStream stream;
+
+    // connection information
+    String portName;
+    int baudRate;
+    int dataBits;
+    int stopBits;
+    int parity;
 
     public SerialMAVLinkPort(MAVLinkSchema schema) {
         super(schema);
         this.schema = schema;
     }
 
-    public void open(String portName, int baudRate, int dataBits, int stopBits, int parity) throws IOException {
+    public void setup(String portName, int baudRate, int dataBits, int stopBits, int parity) {
+        this.portName = portName;
+        this.baudRate = baudRate;
+        this.dataBits = dataBits;
+        this.stopBits = stopBits;
+        this.parity = parity;
+    }
+
+    public void open() throws IOException {
         serialPort = new SerialPort(portName);
         try {
             serialPort.openPort();
