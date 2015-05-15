@@ -18,10 +18,15 @@ public class SerialMAVLinkPort extends MAVLinkPort {
     private SerialPort serialPort;
     private ByteChannel channel = null;
     private MAVLinkStream stream;
+    private boolean debug = false;
 
     public SerialMAVLinkPort(MAVLinkSchema schema) {
         super(schema);
         this.schema = schema;
+    }
+
+    public void setDebug(boolean debug) {
+        this.debug = debug;
     }
 
     public void open(String portName, int baudRate, int dataBits, int stopBits, int parity) throws IOException {
@@ -78,6 +83,7 @@ public class SerialMAVLinkPort extends MAVLinkPort {
             }
         };
         stream = new MAVLinkStream(schema, channel);
+        stream.setDebug(debug);
     }
 
     @Override

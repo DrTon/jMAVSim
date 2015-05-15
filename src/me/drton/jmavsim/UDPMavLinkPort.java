@@ -17,11 +17,16 @@ public class UDPMavLinkPort extends MAVLinkPort {
     private DatagramChannel channel = null;
     private ByteBuffer rxBuffer = ByteBuffer.allocate(8192);
     private MAVLinkStream stream;
+    private boolean debug = false;
 
     public UDPMavLinkPort(MAVLinkSchema schema) {
         super(schema);
         this.schema = schema;
         rxBuffer.flip();
+    }
+
+    public void setDebug(boolean debug) {
+        this.debug = debug;
     }
 
     public void open(SocketAddress bindAddress, SocketAddress peerAddress) throws IOException {
@@ -30,6 +35,7 @@ public class UDPMavLinkPort extends MAVLinkPort {
         channel.configureBlocking(false);
         channel.connect(peerAddress);
         stream = new MAVLinkStream(schema, channel);
+        stream.setDebug(debug);
     }
 
     @Override

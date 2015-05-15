@@ -123,8 +123,10 @@ public class Simulator {
         */
 
         // Open ports
+        //serialMAVLinkPort.setDebug(true);
         serialMAVLinkPort.open("/dev/tty.usbmodem1", 230400, 8, 1, 0);
         serialMAVLinkPort.sendRaw("\nsh /etc/init.d/rc.usb\n".getBytes());
+        //udpMavLinkPort.setDebug(true);
         udpMavLinkPort.open(new InetSocketAddress(14555), new InetSocketAddress(14550));
 
         // Run
