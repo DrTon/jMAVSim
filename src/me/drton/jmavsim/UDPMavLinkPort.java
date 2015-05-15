@@ -49,8 +49,8 @@ public class UDPMavLinkPort extends MAVLinkPort {
         if (isOpened()) {
             try {
                 stream.write(msg);
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (IOException ignored) {
+                // Silently ignore this exception, we likely just have nobody on this port yet/already
             }
         }
     }
@@ -65,7 +65,7 @@ public class UDPMavLinkPort extends MAVLinkPort {
                 }
                 sendMessage(msg);
             } catch (IOException e) {
-                e.printStackTrace();
+                // Silently ignore this exception, we likely just have nobody on this port yet/already
                 return;
             }
         }
