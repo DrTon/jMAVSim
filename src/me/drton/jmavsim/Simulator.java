@@ -105,8 +105,8 @@ public class Simulator {
         visualizer = new Visualizer(world);
 
         // Put camera on vehicle (FPV)
-        visualizer.setViewerPositionObject(vehicle);   // Without gimbal
-        visualizer.setViewerPositionOffset(new Vector3d(-0.6f, 0.0f, -0.3f));
+        visualizer.setViewerPositionObject(vehicle);
+        visualizer.setViewerPositionOffset(new Vector3d(-0.6f, 0.0f, -0.3f));   // Offset from vehicle center
 
         // Put camera on vehicle with gimbal
         /*
@@ -123,8 +123,6 @@ public class Simulator {
         visualizer.setViewerPosition(new Vector3d(-5.0, 0.0, -1.7));
         visualizer.setViewerTargetObject(vehicle);
         */
-
-        world.addObject(visualizer);
 
         // Open ports
         //serialMAVLinkPort.setDebug(true);

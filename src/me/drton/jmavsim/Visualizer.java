@@ -5,14 +5,17 @@ import com.sun.j3d.utils.image.TextureLoader;
 import com.sun.j3d.utils.universe.SimpleUniverse;
 
 import javax.media.j3d.*;
+import javax.swing.*;
 import javax.vecmath.*;
+import java.awt.*;
 import java.util.Enumeration;
 
 /**
  * 3D Visualizer, works in own thread, synchronized with "world" thread.
  */
-public class Visualizer extends WorldObject {
+public class Visualizer extends JFrame {
     private static Color3f white = new Color3f(1.0f, 1.0f, 1.0f);
+    private final World world;
     private SimpleUniverse universe;
     private BoundingSphere sceneBounds = new BoundingSphere(new Point3d(0, 0, 0), 100000.0);
     private Vector3d viewerPosition = new Vector3d(0.0, 0.0, 0.0);
@@ -23,12 +26,19 @@ public class Visualizer extends WorldObject {
     private KinematicObject viewerPositionObject;
 
     public Visualizer(World world) {
-        super(world);
-        universe = new SimpleUniverse();
+        this.world = world;
+
+        setSize(640, 480);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        GraphicsConfiguration gc = SimpleUniverse.getPreferredConfiguration();
+        Canvas3D canvas = new Canvas3D(gc);
+        getContentPane().add(canvas);
+
+        universe = new SimpleUniverse(canvas);
         universe.getViewer().getView().setBackClipDistance(100000.0);
         viewerTransformGroup = universe.getViewingPlatform().getViewPlatformTransform();
         createEnvironment();
-        for (WorldObject object : getWorld().getObjects()) {
+        for (WorldObject object : world.getObjects()) {
             if (object instanceof KinematicObject) {
                 BranchGroup bg = ((KinematicObject) object).getBranchGroup();
                 if (bg != null) {
@@ -36,6 +46,8 @@ public class Visualizer extends WorldObject {
                 }
             }
         }
+        setVisible(true);
+
         Matrix3d mat = new Matrix3d();
         Matrix3d mat1 = new Matrix3d();
         mat.rotZ(Math.PI);
@@ -46,12 +58,9 @@ public class Visualizer extends WorldObject {
         viewerTransform.setRotation(mat);
     }
 
-    @Override
-    public void update(long t) {
-    }
-
     /**
      * Target object to point camera, has effect only if viewerPositionObject is not set.
+     *
      * @param object
      */
     public void setViewerTargetObject(KinematicObject object) {
@@ -60,6 +69,7 @@ public class Visualizer extends WorldObject {
 
     /**
      * Object to place camera on, if nullptr then camera will be placed in fixed point set by setViewerPosition().
+     *
      * @param object
      */
     public void setViewerPositionObject(KinematicObject object) {
@@ -68,6 +78,7 @@ public class Visualizer extends WorldObject {
 
     /**
      * Fixed camera position, has effect only if viewerPositionObject not set.
+     *
      * @param position
      */
     public void setViewerPosition(Vector3d position) {
@@ -78,6 +89,7 @@ public class Visualizer extends WorldObject {
 
     /**
      * Camera position offset from object position when viewer placed on some object
+     *
      * @param offset position offset
      */
     public void setViewerPositionOffset(Vector3d offset) {
@@ -123,7 +135,7 @@ public class Visualizer extends WorldObject {
         Shape3D ground = new Shape3D(polygon1, apGround);
         Transform3D transformGround = new Transform3D();
         transformGround.setTranslation(
-                new Vector3d(0.0, 0.0, 0.005 + getWorld().getEnvironment().getGroundLevel(new Vector3d(0.0, 0.0, 0.0))));
+                new Vector3d(0.0, 0.0, 0.005 + world.getEnvironment().getGroundLevel(new Vector3d(0.0, 0.0, 0.0))));
         TransformGroup tgGround = new TransformGroup(transformGround);
         tgGround.addChild(ground);
         group.addChild(tgGround);
@@ -144,9 +156,9 @@ public class Visualizer extends WorldObject {
     }
 
     private void updateVisualizer() {
-        synchronized (getWorld()) { // Synchronize with "world" thread
+        synchronized (world) { // Synchronize with "world" thread
             // Update branch groups of all kinematic objects
-            for (WorldObject object : getWorld().getObjects()) {
+            for (WorldObject object : world.getObjects()) {
                 if (object instanceof KinematicObject) {
                     BranchGroup bg = ((KinematicObject) object).getBranchGroup();
                     if (bg != null) {
@@ -208,7 +220,7 @@ public class Visualizer extends WorldObject {
         @Override
         public void processStimulus(Enumeration wakeup) {
             Object w;
-            while(wakeup.hasMoreElements()) {
+            while (wakeup.hasMoreElements()) {
                 w = wakeup.nextElement();
                 if (w instanceof WakeupOnElapsedFrames) {
                     updateVisualizer();
