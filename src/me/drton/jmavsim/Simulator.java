@@ -19,7 +19,7 @@ public class Simulator {
     private World world;
     private Visualizer visualizer;
     private int sleepInterval = 5;
-    private int visualizerSleepInterval = 20;
+    private int visualizerSleepInterval = 1000;
     private long nextRun = 0;
 
     public Simulator() throws IOException, InterruptedException, ParserConfigurationException, SAXException {
@@ -103,29 +103,35 @@ public class Simulator {
 
         // Create visualizer
         visualizer = new Visualizer(world);
+
         // Put camera on vehicle (FPV)
         visualizer.setViewerPositionObject(vehicle);   // Without gimbal
+        visualizer.setViewerPositionOffset(new Vector3d(-0.6f, 0.0f, -0.3f));
+
         // Put camera on vehicle with gimbal
         /*
-        // Create camera gimbal
         CameraGimbal2D gimbal = new CameraGimbal2D(world);
         gimbal.setBaseObject(vehicle);
         gimbal.setPitchChannel(4);
         gimbal.setPitchScale(1.57); // +/- 90deg
         world.addObject(gimbal);
-        visualizer.setViewerPositionObject(gimbal);      // With gimbal
+        visualizer.setViewerPositionObject(gimbal);
         */
+
         // Put camera on static point and point to vehicle
         /*
         visualizer.setViewerPosition(new Vector3d(-5.0, 0.0, -1.7));
         visualizer.setViewerTargetObject(vehicle);
-        visualizer.setAutoRotate(true);
         */
 
+        world.addObject(visualizer);
+
         // Open ports
+        //serialMAVLinkPort.setDebug(true);
         serialMAVLinkPort.open("/dev/tty.usbmodem1", 230400, 8, 1, 0);
         serialMAVLinkPort.sendRaw("\nsh /etc/init.d/rc.usb\n".getBytes());
-        udpMavLinkPort.open(new InetSocketAddress(14555));
+        //udpMavLinkPort.setDebug(true);
+        udpMavLinkPort.open(new InetSocketAddress(14555), new InetSocketAddress(14550));
 
         // Run
         try {
@@ -140,19 +146,6 @@ public class Simulator {
     }
 
     public void run() throws IOException, InterruptedException {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-                    visualizer.update();
-                    try {
-                        Thread.sleep(visualizerSleepInterval);
-                    } catch (InterruptedException e) {
-                        break;
-                    }
-                }
-            }
-        }).start();
         nextRun = System.currentTimeMillis() + sleepInterval;
         while (true) {
             long t = System.currentTimeMillis();

@@ -18,10 +18,15 @@ public class SerialMAVLinkPort extends MAVLinkPort {
     private SerialPort serialPort;
     private ByteChannel channel = null;
     private MAVLinkStream stream;
+    private boolean debug = false;
 
     public SerialMAVLinkPort(MAVLinkSchema schema) {
         super(schema);
         this.schema = schema;
+    }
+
+    public void setDebug(boolean debug) {
+        this.debug = debug;
     }
 
     public void open(String portName, int baudRate, int dataBits, int stopBits, int parity) throws IOException {
@@ -77,7 +82,8 @@ public class SerialMAVLinkPort extends MAVLinkPort {
                 }
             }
         };
-        stream = new MAVLinkStream(schema);
+        stream = new MAVLinkStream(schema, channel);
+        stream.setDebug(debug);
     }
 
     @Override
@@ -99,7 +105,7 @@ public class SerialMAVLinkPort extends MAVLinkPort {
     public void handleMessage(MAVLinkMessage msg) {
         if (isOpened()) {
             try {
-                stream.write(msg, channel);
+                stream.write(msg);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -111,7 +117,7 @@ public class SerialMAVLinkPort extends MAVLinkPort {
         MAVLinkMessage msg;
         while (isOpened()) {
             try {
-                msg = stream.read(channel);
+                msg = stream.read();
                 if (msg == null) {
                     break;
                 }

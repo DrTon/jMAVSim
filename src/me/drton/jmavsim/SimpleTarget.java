@@ -34,6 +34,5 @@ public class SimpleTarget extends Target {
         } else {
             velocity.set(0.0, 0.0, 0.0);
         }
-        super.update(t);
     }
 }

@@ -110,6 +110,5 @@ public class LogPlayerTarget extends Target {
                 }
             }
         }
-        super.update(t);
     }
 }

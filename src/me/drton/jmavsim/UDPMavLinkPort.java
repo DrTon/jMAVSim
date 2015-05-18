@@ -17,7 +17,7 @@ public class UDPMavLinkPort extends MAVLinkPort {
     private DatagramChannel channel = null;
     private ByteBuffer rxBuffer = ByteBuffer.allocate(8192);
     private MAVLinkStream stream;
-    private SocketAddress sendAddress;
+    private boolean debug = false;
 
     public UDPMavLinkPort(MAVLinkSchema schema) {
         super(schema);
@@ -25,11 +25,17 @@ public class UDPMavLinkPort extends MAVLinkPort {
         rxBuffer.flip();
     }
 
-    public void open(SocketAddress address) throws IOException {
+    public void setDebug(boolean debug) {
+        this.debug = debug;
+    }
+
+    public void open(SocketAddress bindAddress, SocketAddress peerAddress) throws IOException {
         channel = DatagramChannel.open();
-        channel.socket().bind(address);
+        channel.socket().bind(bindAddress);
         channel.configureBlocking(false);
-        stream = new MAVLinkStream(schema);
+        channel.connect(peerAddress);
+        stream = new MAVLinkStream(schema, channel);
+        stream.setDebug(debug);
     }
 
     @Override
@@ -46,39 +52,28 @@ public class UDPMavLinkPort extends MAVLinkPort {
 
     @Override
     public void handleMessage(MAVLinkMessage msg) {
-        if (isOpened() && sendAddress != null) {
+        if (isOpened()) {
             try {
-                channel.send(stream.write(msg), sendAddress);
-            } catch (IOException e) {
-                e.printStackTrace();
+                stream.write(msg);
+            } catch (IOException ignored) {
+                // Silently ignore this exception, we likely just have nobody on this port yet/already
             }
         }
     }
 
     @Override
     public void update(long t) {
-        MAVLinkMessage msg;
         while (isOpened()) {
             try {
-                rxBuffer.compact();
-                SocketAddress addr = channel.receive(rxBuffer);
-                rxBuffer.flip();
-                msg = stream.read(rxBuffer);
+                MAVLinkMessage msg = stream.read();
                 if (msg == null) {
                     break;
                 }
-                if (addr != null) {
-                    sendAddress = addr;
-                }
                 sendMessage(msg);
             } catch (IOException e) {
-                e.printStackTrace();
+                // Silently ignore this exception, we likely just have nobody on this port yet/already
                 return;
             }
         }
-    }
-
-    public void setSendAddress(SocketAddress sendAddress) {
-        this.sendAddress = sendAddress;
     }
 }
