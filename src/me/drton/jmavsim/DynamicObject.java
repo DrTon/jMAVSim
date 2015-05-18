@@ -80,7 +80,6 @@ public abstract class DynamicObject extends KinematicObject {
             rotationRate.add(angularAcc);
         }
         lastTime = t;
-        super.update(t);
     }
 
     protected abstract Vector3d getForce();

@@ -10,7 +10,7 @@ import java.io.FileNotFoundException;
 /**
  * User: ton Date: 01.02.14 Time: 22:12
  */
-public class Target extends KinematicObject {
+public abstract class Target extends KinematicObject {
     private GlobalPositionProjector gpsProjector = new GlobalPositionProjector();
 
     public Target(World world, double size) throws FileNotFoundException {
