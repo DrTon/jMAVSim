@@ -3,7 +3,6 @@ package me.drton.jmavsim;
 import me.drton.jmavlib.mavlink.MAVLinkSchema;
 
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * User: ton Date: 02.12.13 Time: 20:56
@@ -14,8 +13,6 @@ public abstract class MAVLinkPort extends MAVLinkNode {
     }
 
     public abstract void close() throws IOException;
-
-    public abstract void open() throws IOException;
 
     public abstract boolean isOpened();
 }
