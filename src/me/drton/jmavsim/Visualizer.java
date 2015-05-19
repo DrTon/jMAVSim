@@ -5,26 +5,38 @@ import com.sun.j3d.utils.image.TextureLoader;
 import com.sun.j3d.utils.universe.SimpleUniverse;
 
 import javax.media.j3d.*;
+import javax.swing.*;
 import javax.vecmath.*;
+import java.awt.*;
+import java.util.Enumeration;
 
 /**
- * User: ton Date: 28.11.13 Time: 23:15
+ * 3D Visualizer, works in own thread, synchronized with "world" thread.
  */
-public class Visualizer {
+public class Visualizer extends JFrame {
     private static Color3f white = new Color3f(1.0f, 1.0f, 1.0f);
+    private final World world;
     private SimpleUniverse universe;
-    private World world;
     private BoundingSphere sceneBounds = new BoundingSphere(new Point3d(0, 0, 0), 100000.0);
     private Vector3d viewerPosition = new Vector3d(0.0, 0.0, 0.0);
+    private Vector3d viewerPositionOffset = new Vector3d(0.0, 0.0, 0.0);
     private Transform3D viewerTransform = new Transform3D();
+    private TransformGroup viewerTransformGroup;
     private KinematicObject viewerTargetObject;
     private KinematicObject viewerPositionObject;
-    private boolean autoRotate = false;
 
     public Visualizer(World world) {
         this.world = world;
-        universe = new SimpleUniverse();
+
+        setSize(640, 480);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        GraphicsConfiguration gc = SimpleUniverse.getPreferredConfiguration();
+        Canvas3D canvas = new Canvas3D(gc);
+        getContentPane().add(canvas);
+
+        universe = new SimpleUniverse(canvas);
         universe.getViewer().getView().setBackClipDistance(100000.0);
+        viewerTransformGroup = universe.getViewingPlatform().getViewPlatformTransform();
         createEnvironment();
         for (WorldObject object : world.getObjects()) {
             if (object instanceof KinematicObject) {
@@ -34,23 +46,54 @@ public class Visualizer {
                 }
             }
         }
+        setVisible(true);
+
+        Matrix3d mat = new Matrix3d();
+        Matrix3d mat1 = new Matrix3d();
+        mat.rotZ(Math.PI);
+        mat1.rotY(Math.PI / 2);
+        mat.mul(mat1);
+        mat1.rotZ(-Math.PI / 2);
+        mat.mul(mat1);
+        viewerTransform.setRotation(mat);
     }
 
-    public void setAutoRotate(boolean autoRotate) {
-        this.autoRotate = autoRotate;
-    }
-
+    /**
+     * Target object to point camera, has effect only if viewerPositionObject is not set.
+     *
+     * @param object
+     */
     public void setViewerTargetObject(KinematicObject object) {
         this.viewerTargetObject = object;
     }
 
+    /**
+     * Object to place camera on, if nullptr then camera will be placed in fixed point set by setViewerPosition().
+     *
+     * @param object
+     */
     public void setViewerPositionObject(KinematicObject object) {
         this.viewerPositionObject = object;
     }
 
+    /**
+     * Fixed camera position, has effect only if viewerPositionObject not set.
+     *
+     * @param position
+     */
     public void setViewerPosition(Vector3d position) {
         this.viewerPositionObject = null;
         this.viewerPosition = position;
+        viewerTransform.setTranslation(viewerPosition);
+    }
+
+    /**
+     * Camera position offset from object position when viewer placed on some object
+     *
+     * @param offset position offset
+     */
+    public void setViewerPositionOffset(Vector3d offset) {
+        this.viewerPositionOffset = offset;
     }
 
     private void createEnvironment() {
@@ -96,6 +139,7 @@ public class Visualizer {
         TransformGroup tgGround = new TransformGroup(transformGround);
         tgGround.addChild(ground);
         group.addChild(tgGround);
+
         // Light
         DirectionalLight light1 = new DirectionalLight(white, new Vector3f(4.0f, 7.0f, 12.0f));
         light1.setInfluencingBounds(sceneBounds);
@@ -103,46 +147,86 @@ public class Visualizer {
         AmbientLight light2 = new AmbientLight(new Color3f(0.5f, 0.5f, 0.5f));
         light2.setInfluencingBounds(sceneBounds);
         group.addChild(light2);
+
+        // Update behavior
+        Behavior b = new UpdateBehavior();
+        b.setSchedulingBounds(bounds);
+        group.addChild(b);
         universe.addBranchGraph(group);
     }
 
-    private void updateViewer() {
-        if (viewerPositionObject != null) {
-            viewerPosition.set(viewerPositionObject.getPosition());
-        }
-        Matrix3d mat = new Matrix3d();
-        mat.setIdentity();
-        Matrix3d m1 = new Matrix3d();
-        if (autoRotate) {
-            if (viewerTargetObject != null) {
-                Vector3d pos = viewerTargetObject.getPosition();
-                mat.rotZ(Math.PI);
-                Vector3d dist = new Vector3d();
-                dist.sub(pos, viewerPosition);
-                m1.rotY(Math.PI / 2);
-                mat.mul(m1);
-                m1.rotZ(-Math.PI / 2);
-                mat.mul(m1);
-                m1.rotY(-Math.atan2(pos.y - viewerPosition.y, pos.x - viewerPosition.x));
-                mat.mul(m1);
-                m1.rotX(-Math.asin((pos.z - viewerPosition.z) / dist.length()));
-                mat.mul(m1);
+    private void updateVisualizer() {
+        synchronized (world) { // Synchronize with "world" thread
+            // Update branch groups of all kinematic objects
+            for (WorldObject object : world.getObjects()) {
+                if (object instanceof KinematicObject) {
+                    BranchGroup bg = ((KinematicObject) object).getBranchGroup();
+                    if (bg != null) {
+                        ((KinematicObject) object).updateBranchGroup();
+                    }
+                }
             }
-        } else {
-            mat.mul(viewerPositionObject.getRotation());
-            m1.rotZ(Math.PI / 2);
-            mat.mul(m1);
-            m1.rotX(-Math.PI / 2);
-            mat.mul(m1);
+
+            // Update view platform
+            if (viewerPositionObject != null) {
+                // Camera on object
+                viewerPosition.set(viewerPositionOffset);
+                viewerPositionObject.getRotation().transform(viewerPosition);
+                viewerPosition.add(viewerPositionObject.getPosition());
+                viewerTransform.setTranslation(viewerPosition);
+
+                Matrix3d mat = new Matrix3d();
+                Matrix3d mat1 = new Matrix3d();
+                mat.set(viewerPositionObject.getRotation());
+                mat1.rotZ(Math.PI / 2);
+                mat.mul(mat1);
+                mat1.rotX(-Math.PI / 2);
+                mat.mul(mat1);
+                viewerTransform.setRotation(mat);
+            } else {
+                // Fixed camera
+                if (viewerTargetObject != null) {
+                    // Point camera to target
+                    Vector3d pos = viewerTargetObject.getPosition();
+                    Vector3d dist = new Vector3d();
+                    dist.sub(pos, viewerPosition);
+
+                    Matrix3d mat = new Matrix3d();
+                    Matrix3d mat1 = new Matrix3d();
+                    mat.rotZ(Math.PI);
+                    mat1.rotY(Math.PI / 2);
+                    mat.mul(mat1);
+                    mat1.rotZ(-Math.PI / 2);
+                    mat.mul(mat1);
+                    mat1.rotY(-Math.atan2(pos.y - viewerPosition.y, pos.x - viewerPosition.x));
+                    mat.mul(mat1);
+                    mat1.rotX(-Math.asin((pos.z - viewerPosition.z) / dist.length()));
+                    mat.mul(mat1);
+                    viewerTransform.setRotation(mat);
+                }
+            }
+            viewerTransformGroup.setTransform(viewerTransform);
         }
-        viewerTransform.setRotation(mat);
-        viewerTransform.setTranslation(viewerPosition);
-        universe.getViewingPlatform().getViewPlatformTransform().setTransform(viewerTransform);
     }
 
-    public void update() {
-        synchronized (world) {
-            updateViewer();
+    class UpdateBehavior extends Behavior {
+        private WakeupCondition condition = new WakeupOnElapsedFrames(0, false);
+
+        @Override
+        public void initialize() {
+            wakeupOn(condition);
+        }
+
+        @Override
+        public void processStimulus(Enumeration wakeup) {
+            Object w;
+            while (wakeup.hasMoreElements()) {
+                w = wakeup.nextElement();
+                if (w instanceof WakeupOnElapsedFrames) {
+                    updateVisualizer();
+                }
+                wakeupOn(condition);
+            }
         }
     }
 }

@@ -9,39 +9,27 @@ import me.drton.jmavlib.mavlink.MAVLinkStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
-import java.util.Map;
 
 /**
  * User: ton Date: 28.11.13 Time: 23:30
  */
 public class SerialMAVLinkPort extends MAVLinkPort {
-
     private MAVLinkSchema schema;
     private SerialPort serialPort;
     private ByteChannel channel = null;
     private MAVLinkStream stream;
-
-    // connection information
-    String portName;
-    int baudRate;
-    int dataBits;
-    int stopBits;
-    int parity;
+    private boolean debug = false;
 
     public SerialMAVLinkPort(MAVLinkSchema schema) {
         super(schema);
         this.schema = schema;
     }
 
-    public void setup(String portName, int baudRate, int dataBits, int stopBits, int parity) {
-        this.portName = portName;
-        this.baudRate = baudRate;
-        this.dataBits = dataBits;
-        this.stopBits = stopBits;
-        this.parity = parity;
+    public void setDebug(boolean debug) {
+        this.debug = debug;
     }
 
-    public void open() throws IOException {
+    public void open(String portName, int baudRate, int dataBits, int stopBits, int parity) throws IOException {
         serialPort = new SerialPort(portName);
         try {
             serialPort.openPort();
@@ -94,7 +82,8 @@ public class SerialMAVLinkPort extends MAVLinkPort {
                 }
             }
         };
-        stream = new MAVLinkStream(schema);
+        stream = new MAVLinkStream(schema, channel);
+        stream.setDebug(debug);
     }
 
     @Override
@@ -116,7 +105,7 @@ public class SerialMAVLinkPort extends MAVLinkPort {
     public void handleMessage(MAVLinkMessage msg) {
         if (isOpened()) {
             try {
-                stream.write(msg, channel);
+                stream.write(msg);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -128,7 +117,7 @@ public class SerialMAVLinkPort extends MAVLinkPort {
         MAVLinkMessage msg;
         while (isOpened()) {
             try {
-                msg = stream.read(channel);
+                msg = stream.read();
                 if (msg == null) {
                     break;
                 }

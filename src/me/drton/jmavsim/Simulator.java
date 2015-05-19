@@ -10,21 +10,16 @@ import javax.vecmath.Matrix3d;
 import javax.vecmath.Vector3d;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.HashMap;
 
 /**
  * User: ton Date: 26.11.13 Time: 12:33
  */
 public class Simulator {
-
-    public static final boolean USE_SERIAL_PORT = false;
-
     private World world;
     private Visualizer visualizer;
     private int sleepInterval = 5;
-    private int visualizerSleepInterval = 20;
+    private int visualizerSleepInterval = 1000;
     private long nextRun = 0;
 
     public Simulator() throws IOException, InterruptedException, ParserConfigurationException, SAXException {
@@ -45,25 +40,13 @@ public class Simulator {
         world.addObject(connCommon);
 
         // Create ports
-        MAVLinkPort autopilotMavLinkPort;
-        if (USE_SERIAL_PORT) {
-            //Serial port: connection to autopilot over serial.
-            SerialMAVLinkPort port = new SerialMAVLinkPort(schema);
-            port.setup("/dev/tty.usbmodem1", 230400, 8, 1, 0);
-            autopilotMavLinkPort = port;
-        } else {
-            UDPMavLinkPort port = new UDPMavLinkPort(schema);
-            port.setup(14550, true);
-            autopilotMavLinkPort = port;
-        }
-
-        // allow HIL and GCS to talk to this port
-        connHIL.addNode(autopilotMavLinkPort);
-        connCommon.addNode(autopilotMavLinkPort);
+        // Serial port: connection to autopilot
+        SerialMAVLinkPort serialMAVLinkPort = new SerialMAVLinkPort(schema);
+        connCommon.addNode(serialMAVLinkPort);
+        connHIL.addNode(serialMAVLinkPort);
         // UDP port: connection to ground station
-        UDPMavLinkPort udpGCMavLinkPort = new UDPMavLinkPort(schema);
-        udpGCMavLinkPort.setup(14555, false);
-        connCommon.addNode(udpGCMavLinkPort);
+        UDPMavLinkPort udpMavLinkPort = new UDPMavLinkPort(schema);
+        connCommon.addNode(udpMavLinkPort);
 
         // Create environment
         SimpleEnvironment simpleEnvironment = new SimpleEnvironment(world);
@@ -120,28 +103,33 @@ public class Simulator {
 
         // Create visualizer
         visualizer = new Visualizer(world);
+
         // Put camera on vehicle (FPV)
-        visualizer.setViewerPositionObject(vehicle);   // Without gimbal
+        visualizer.setViewerPositionObject(vehicle);
+        visualizer.setViewerPositionOffset(new Vector3d(-0.6f, 0.0f, -0.3f));   // Offset from vehicle center
+
         // Put camera on vehicle with gimbal
         /*
-        // Create camera gimbal
         CameraGimbal2D gimbal = new CameraGimbal2D(world);
         gimbal.setBaseObject(vehicle);
         gimbal.setPitchChannel(4);
         gimbal.setPitchScale(1.57); // +/- 90deg
         world.addObject(gimbal);
-        visualizer.setViewerPositionObject(gimbal);      // With gimbal
+        visualizer.setViewerPositionObject(gimbal);
         */
+
         // Put camera on static point and point to vehicle
         /*
         visualizer.setViewerPosition(new Vector3d(-5.0, 0.0, -1.7));
         visualizer.setViewerTargetObject(vehicle);
-        visualizer.setAutoRotate(true);
         */
 
         // Open ports
-        autopilotMavLinkPort.open();
-        udpGCMavLinkPort.open();
+        //serialMAVLinkPort.setDebug(true);
+        serialMAVLinkPort.open("/dev/tty.usbmodem1", 230400, 8, 1, 0);
+        serialMAVLinkPort.sendRaw("\nsh /etc/init.d/rc.usb\n".getBytes());
+        //udpMavLinkPort.setDebug(true);
+        udpMavLinkPort.open(new InetSocketAddress(14555), new InetSocketAddress(14550));
 
         // Run
         try {
@@ -151,24 +139,11 @@ public class Simulator {
         }
 
         // Close ports
-        autopilotMavLinkPort.close();
-        udpGCMavLinkPort.close();
+        serialMAVLinkPort.close();
+        udpMavLinkPort.close();
     }
 
     public void run() throws IOException, InterruptedException {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-                    visualizer.update();
-                    try {
-                        Thread.sleep(visualizerSleepInterval);
-                    } catch (InterruptedException e) {
-                        break;
-                    }
-                }
-            }
-        }).start();
         nextRun = System.currentTimeMillis() + sleepInterval;
         while (true) {
             long t = System.currentTimeMillis();

@@ -51,8 +51,7 @@ public abstract class KinematicObject extends WorldObject {
         return branchGroup;
     }
 
-    @Override
-    public void update(long t) {
+    public void updateBranchGroup() {
         transform.setTranslation(position);
         transform.setRotationScale(rotation);
         transformGroup.setTransform(transform);
