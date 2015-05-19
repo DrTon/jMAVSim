@@ -37,13 +37,13 @@
             <zipfileset includes="**/*.class" src="lib/j3dutils.jar"/>
             <zipfileset includes="**/*.class" src="lib/vecmath.jar"/>
             <zipfileset src="lib/jssc.jar"/>
+            <zipfileset src="lib/gluegen-rt.jar"/>
+            <zipfileset src="lib/gluegen-rt-natives-macosx-universal.jar"/>
+            <zipfileset src="lib/joal.jar"/>
+            <zipfileset src="lib/joal-natives-macosx-universal.jar"/>
+            <zipfileset src="lib/jogl-all.jar"/>
+            <zipfileset src="lib/jogl-all-natives-macosx-universal.jar"/>
         </jar>
-    </target>
-
-    <taskdef name="jarbundler" classpath="lib/jarbundler-2.2.0.jar" classname="net.sourceforge.jarbundler.JarBundler"/>
-    <target name="jmavsim_mac_os_app" description="Build jMAVSim Mac OS X app" depends="jmavsim">
-        <jarbundler dir="out/production" name="jMAVSim" mainclass="me.drton.jmavsim.Simulator"
-                    jar="out/production/jmavsim.jar" version="0.0.1"/>
     </target>
 
     <target name="clean" description="Clean up">
