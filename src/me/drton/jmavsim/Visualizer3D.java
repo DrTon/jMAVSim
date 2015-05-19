@@ -13,7 +13,7 @@ import java.util.Enumeration;
 /**
  * 3D Visualizer, works in own thread, synchronized with "world" thread.
  */
-public class Visualizer extends JFrame {
+public class Visualizer3D extends JFrame {
     private static Color3f white = new Color3f(1.0f, 1.0f, 1.0f);
     private final World world;
     private SimpleUniverse universe;
@@ -25,7 +25,7 @@ public class Visualizer extends JFrame {
     private KinematicObject viewerTargetObject;
     private KinematicObject viewerPositionObject;
 
-    public Visualizer(World world) {
+    public Visualizer3D(World world) {
         this.world = world;
 
         setSize(640, 480);
