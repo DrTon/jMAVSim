@@ -13,6 +13,8 @@ Installation
 Requirements:
 - Java 6 or newer (JDK, http://www.oracle.com/technetwork/java/javase/downloads/index.html)
 
+Java3D and JOGL/JOAL jars, including native libs for Linux (i586/64bit), Windows (i586/64bit) and Mac OS (universal) already included in this repository, no need to install it.
+
 Clone repository and initialize submodules:
 ```
 git clone https://github.com/DrTon/jMAVSim
@@ -28,7 +30,17 @@ ant
 
 Run:
 ```
-java -jar out/production/jmavsim.jar
+java -cp lib/*:out/production/jmavsim.jar me.drton.jmavsim.Simulator
+```
+
+Some shells (e.g. tcsh) will try to expand `*`, so use `\*` instead:
+```
+java -cp lib/\*:out/production/jmavsim.jar me.drton.jmavsim.Simulator
+```
+
+On Windows use `;` instead of `:` in -cp:
+```
+java -cp lib/*;out/production/jmavsim.jar me.drton.jmavsim.Simulator
 ```
 
 ### Platform-specific
@@ -48,7 +60,7 @@ Exception in thread "main" java.lang.NoClassDefFoundError: apple/awt/CGraphicsDe
 
 Then just add `-Djava.ext.dirs=` option to command line when starting:
 ```
-java -Djava.ext.dirs= -jar out/production/jmavsim.jar
+java -Djava.ext.dirs= -cp lib/*:out/production/jmavsim.jar me.drton.jmavsim.Simulator
 ```
 
 Developing
