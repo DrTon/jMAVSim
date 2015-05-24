@@ -17,7 +17,7 @@ import java.net.InetSocketAddress;
  */
 public class Simulator {
     private World world;
-    private int sleepInterval = 5;  // Main loop interval, in ms
+    private int sleepInterval = 4;  // Main loop interval, in ms
 
     public Simulator() throws IOException, InterruptedException, ParserConfigurationException, SAXException {
         // Create world
@@ -124,13 +124,19 @@ public class Simulator {
     }
 
     public void run() throws IOException, InterruptedException {
-        long nextRun = System.currentTimeMillis() + sleepInterval;
+        long t = System.currentTimeMillis();
         while (true) {
-            long t = System.currentTimeMillis();
             world.update(t);
-            long timeLeft = Math.max(sleepInterval / 4, nextRun - System.currentTimeMillis());
-            nextRun = Math.max(t + sleepInterval / 4, nextRun + sleepInterval);
-            Thread.sleep(timeLeft);
+            long now = System.currentTimeMillis();
+            long nextRun = t + sleepInterval;
+            long timeLeft = nextRun - now;
+            if (timeLeft < -sleepInterval * 10) {
+                System.out.printf("Skipped %s ms\n", -timeLeft);
+                nextRun = now;
+            } else if (timeLeft > 0) {
+                Thread.sleep(timeLeft);
+            }
+            t = nextRun;
         }
     }
 
