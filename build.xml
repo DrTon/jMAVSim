@@ -27,23 +27,10 @@
 
     <target name="jmavsim" description="Link classes and JARs for jMAVSim" depends="compile">
         <jar id="jmavsim" jarfile="out/production/jmavsim.jar">
-            <manifest>
-                <attribute name="Main-Class" value="me.drton.jmavsim.Simulator"/>
-            </manifest>
             <fileset dir="out/production/jMAVSim">
                 <include name="**/*.class"/>
             </fileset>
-            <zipfileset includes="**/*.class" src="lib/j3dcore.jar" />
-            <zipfileset includes="**/*.class" src="lib/j3dutils.jar"/>
-            <zipfileset includes="**/*.class" src="lib/vecmath.jar"/>
-            <zipfileset src="lib/jssc.jar"/>
         </jar>
-    </target>
-
-    <taskdef name="jarbundler" classpath="lib/jarbundler-2.2.0.jar" classname="net.sourceforge.jarbundler.JarBundler"/>
-    <target name="jmavsim_mac_os_app" description="Build jMAVSim Mac OS X app" depends="jmavsim">
-        <jarbundler dir="out/production" name="jMAVSim" mainclass="me.drton.jmavsim.Simulator"
-                    jar="out/production/jmavsim.jar" version="0.0.1"/>
     </target>
 
     <target name="clean" description="Clean up">

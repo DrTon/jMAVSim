@@ -17,14 +17,12 @@ import java.net.InetSocketAddress;
  */
 public class Simulator {
     private World world;
-    private Visualizer visualizer;
-    private int sleepInterval = 5;
-    private int visualizerSleepInterval = 1000;
-    private long nextRun = 0;
+    private int sleepInterval = 4;  // Main loop interval, in ms
 
     public Simulator() throws IOException, InterruptedException, ParserConfigurationException, SAXException {
         // Create world
         world = new World();
+        // Set global reference point
         world.setGlobalReference(new LatLonAlt(55.753395, 37.625427, 0.0));
 
         MAVLinkSchema schema = new MAVLinkSchema("mavlink/message_definitions/common.xml");
@@ -83,26 +81,8 @@ public class Simulator {
         connHIL.addNode(hilSystem);
         world.addObject(vehicle);
 
-        // Create target
-        /*
-        SimpleTarget target = new SimpleTarget(world, 0.3);
-        long t = System.currentTimeMillis();
-        target.setTrajectory(new Vector3d(5.0, 0.0, -2.0), new Vector3d(5.0, 100.0, -2.0), t + 20000, t + 50000);
-        connCommon.addNode(new MAVLinkTargetSystem(2, 1, target));
-        world.addObject(target);
-        */
-
-        // Create MAVLink control
-        // TargetComponentID should be 190
-        /*
-        MAVLinkControl mavLinkControl = new MAVLinkControl(schema, 5, 1, 1, 190);
-        mavLinkControl.loadMission("/path/to/some/mission.txt");
-        mavLinkControl.setMissionSendTime(System.currentTimeMillis() + 15000);
-        connHIL.addNode(mavLinkControl);
-        */
-
-        // Create visualizer
-        visualizer = new Visualizer(world);
+        // Create 3D visualizer
+        Visualizer3D visualizer = new Visualizer3D(world);
 
         // Put camera on vehicle (FPV)
         visualizer.setViewerPositionObject(vehicle);
@@ -112,7 +92,7 @@ public class Simulator {
         /*
         CameraGimbal2D gimbal = new CameraGimbal2D(world);
         gimbal.setBaseObject(vehicle);
-        gimbal.setPitchChannel(4);
+        gimbal.setPitchChannel(4);  // Control gimbal from autopilot
         gimbal.setPitchScale(1.57); // +/- 90deg
         world.addObject(gimbal);
         visualizer.setViewerPositionObject(gimbal);
@@ -144,13 +124,19 @@ public class Simulator {
     }
 
     public void run() throws IOException, InterruptedException {
-        nextRun = System.currentTimeMillis() + sleepInterval;
+        long t = System.currentTimeMillis();
         while (true) {
-            long t = System.currentTimeMillis();
             world.update(t);
-            long timeLeft = Math.max(sleepInterval / 4, nextRun - System.currentTimeMillis());
-            nextRun = Math.max(t + sleepInterval / 4, nextRun + sleepInterval);
-            Thread.sleep(timeLeft);
+            long now = System.currentTimeMillis();
+            long nextRun = t + sleepInterval;
+            long timeLeft = nextRun - now;
+            if (timeLeft < -sleepInterval * 10) {
+                System.out.printf("Skipped %s ms\n", -timeLeft);
+                nextRun = now;
+            } else if (timeLeft > 0) {
+                Thread.sleep(timeLeft);
+            }
+            t = nextRun;
         }
     }
 
