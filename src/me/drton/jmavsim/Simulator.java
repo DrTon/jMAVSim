@@ -18,6 +18,7 @@ import java.net.InetSocketAddress;
 public class Simulator {
     private World world;
     private int sleepInterval = 4;  // Main loop interval, in ms
+    private int simDelayMax = 500;  // Max delay between simulated and real time to skip samples in simulator, in ms
 
     public Simulator() throws IOException, InterruptedException, ParserConfigurationException, SAXException {
         // Create world
@@ -130,7 +131,7 @@ public class Simulator {
             long now = System.currentTimeMillis();
             long nextRun = t + sleepInterval;
             long timeLeft = nextRun - now;
-            if (timeLeft < -sleepInterval * 10) {
+            if (timeLeft < -simDelayMax) {
                 System.out.printf("Skipped %s ms\n", -timeLeft);
                 nextRun = now;
             } else if (timeLeft > 0) {
