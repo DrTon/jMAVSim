@@ -12,11 +12,11 @@ import javax.vecmath.Vector3d;
 public class SimpleSensors implements Sensors {
     private DynamicObject object;
     private GlobalPositionProjector globalProjector = new GlobalPositionProjector();
-    private DelayLine<GPSPosition> gpsDelayLine = new DelayLine<GPSPosition>();
+    private DelayLine<GNSSReport> gpsDelayLine = new DelayLine<GNSSReport>();
     private long gpsStartTime = 0;
     private long gpsInterval = 200;
     private long gpsLast = 0;
-    private GPSPosition gps = new GPSPosition();
+    private GNSSReport gps = new GNSSReport();
     private boolean gpsUpdated = false;
 
     @Override
@@ -68,7 +68,7 @@ public class SimpleSensors implements Sensors {
     }
 
     @Override
-    public GPSPosition getGPS() {
+    public GNSSReport getGNSS() {
         return gps;
     }
 
@@ -85,7 +85,7 @@ public class SimpleSensors implements Sensors {
         if (t > gpsStartTime && t > gpsLast + gpsInterval) {
             gpsLast = t;
             gpsUpdated = true;
-            GPSPosition gpsCurrent = new GPSPosition();
+            GNSSReport gpsCurrent = new GNSSReport();
             Vector3d pos = object.getPosition();
             gpsCurrent.position = globalProjector.reproject(new double[]{pos.x, pos.y, pos.z});
             gpsCurrent.eph = 1.0;

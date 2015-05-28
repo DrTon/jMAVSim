@@ -7,7 +7,8 @@ import javax.vecmath.Vector3d;
 import java.io.FileNotFoundException;
 
 /**
- * User: ton Date: 29.11.13 Time: 16:59
+ * Abstract multicopter class. Does all necessary calculations for multirotor with any placement of rotors.
+ * Only rotors on one plane supported now.
  */
 public abstract class AbstractMulticopter extends AbstractVehicle {
     private double dragMove = 0.0;
@@ -30,7 +31,7 @@ public abstract class AbstractMulticopter extends AbstractVehicle {
     protected abstract int getRotorsNum();
 
     /**
-     * Get rotor coordinates.
+     * Get rotor position relative to gravity center of vehicle.
      *
      * @param i rotor number
      * @return rotor radius-vector from GC

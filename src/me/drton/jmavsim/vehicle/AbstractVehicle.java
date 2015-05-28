@@ -11,7 +11,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * User: ton Date: 26.11.13 Time: 16:00
+ * Abstract vehicle class, should be used for creating vehicle of any type.
+ * Child class should use member 'control' as control input for actuators.
+ * 'update()' method of AbstractVehicle must be called from child class implementation if overridden.
  */
 public abstract class AbstractVehicle extends DynamicObject {
     protected List<Double> control = Collections.emptyList();
@@ -31,6 +33,11 @@ public abstract class AbstractVehicle extends DynamicObject {
         return control;
     }
 
+    /**
+     * Set sensors object for the vehicle.
+     *
+     * @param sensors
+     */
     public void setSensors(Sensors sensors) {
         this.sensors = sensors;
         sensors.setObject(this);

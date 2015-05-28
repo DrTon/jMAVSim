@@ -16,7 +16,7 @@ public interface Sensors {
 
     double getPressureAlt();
 
-    GPSPosition getGPS();
+    GNSSReport getGNSS();
 
     boolean isGPSUpdated();
 

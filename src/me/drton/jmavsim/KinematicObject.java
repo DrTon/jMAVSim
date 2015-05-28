@@ -11,7 +11,9 @@ import javax.vecmath.Vector3d;
 import java.io.FileNotFoundException;
 
 /**
- * User: ton Date: 05.05.14 Time: 8:20
+ * Abstract kinematic object class.
+ * Stores all kinematic parameters (attitude, attitude rates, position, velocity, acceleration) but doesn't calculate it.
+ * These parameters may be set directly for objects moving by fixed trajectory or simulated from external forces (see DynamicObject).
  */
 public abstract class KinematicObject extends WorldObject {
     protected Vector3d position = new Vector3d();

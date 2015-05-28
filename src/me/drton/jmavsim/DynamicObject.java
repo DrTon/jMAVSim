@@ -5,7 +5,8 @@ import javax.vecmath.Matrix3d;
 import javax.vecmath.Vector3d;
 
 /**
- * User: ton Date: 02.02.14 Time: 12:01
+ * Abstract dynamic object class.
+ * Calculates all kinematic parameters (attitude, attitude rates, position, velocity, acceleration) from force and torque acting on the vehicle.
  */
 public abstract class DynamicObject extends KinematicObject {
     protected long lastTime = -1;

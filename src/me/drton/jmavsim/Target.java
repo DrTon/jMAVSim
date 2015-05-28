@@ -20,10 +20,10 @@ public abstract class Target extends KinematicObject {
         gpsProjector.init(world.getGlobalReference());
     }
 
-    public GPSPosition getGlobalPosition() {
+    public GNSSReport getGlobalPosition() {
         Vector3d pos = getPosition();
         LatLonAlt latLonAlt = gpsProjector.reproject(new double[]{pos.x, pos.y, pos.z});
-        GPSPosition gps = new GPSPosition();
+        GNSSReport gps = new GNSSReport();
         gps.position = latLonAlt;
         gps.eph = 1.0;
         gps.epv = 1.0;

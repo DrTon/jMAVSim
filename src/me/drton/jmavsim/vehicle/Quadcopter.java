@@ -8,14 +8,27 @@ import javax.vecmath.Vector3d;
 import java.io.FileNotFoundException;
 
 /**
- * User: ton Date: 26.11.13 Time: 16:00
+ * Generic quadcopter model.
  */
 public class Quadcopter extends AbstractMulticopter {
     private static final int rotorsNum = 4;
     private Vector3d[] rotorPositions = new Vector3d[rotorsNum];
 
+    /**
+     * Generic quadcopter constructor.
+     *
+     * @param world          world where to place the vehicle
+     * @param modelName      filename of model to load, in .obj format
+     * @param orientation    "x" or "+"
+     * @param armLength      length of arm from center
+     * @param rotorThrust    full thrust of one rotor
+     * @param rotorTorque    torque at full thrust of one rotor
+     * @param rotorTimeConst spin-up time of rotor
+     * @param rotorsOffset   rotors positions offset from gravity center
+     * @throws FileNotFoundException if .obj model file not found
+     */
     public Quadcopter(World world, String modelName, String orientation, double armLength, double rotorThrust,
-                      double rotorTorque, double rotorTimeConst, Vector3d gcOffset) throws FileNotFoundException {
+                      double rotorTorque, double rotorTimeConst, Vector3d rotorsOffset) throws FileNotFoundException {
         super(world, modelName);
         rotorPositions[0] = new Vector3d(0.0, armLength, 0.0);
         rotorPositions[1] = new Vector3d(0.0, -armLength, 0.0);
@@ -32,7 +45,7 @@ public class Quadcopter extends AbstractMulticopter {
             throw new RuntimeException("Unknown orientation: " + orientation);
         }
         for (int i = 0; i < rotors.length; i++) {
-            rotorPositions[i].sub(gcOffset);
+            rotorPositions[i].add(rotorsOffset);
             Rotor rotor = rotors[i];
             rotor.setFullThrust(rotorThrust);
             rotor.setFullTorque(i < 2 ? -rotorTorque : rotorTorque);
