@@ -5,6 +5,7 @@ import me.drton.jmavlib.mavlink.MAVLinkStream;
 import me.drton.jmavlib.mavlink.MAVLinkMessage;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
@@ -16,6 +17,11 @@ public class UDPMavLinkPort extends MAVLinkPort {
     private MAVLinkSchema schema;
     private DatagramChannel channel = null;
     private ByteBuffer rxBuffer = ByteBuffer.allocate(8192);
+    private SocketAddress sendAddress;
+    private SocketAddress bindPort;
+    private SocketAddress peerPort;
+    private int portAddress;
+    private boolean isClient;
     private MAVLinkStream stream;
     private boolean debug = false;
 
@@ -29,13 +35,24 @@ public class UDPMavLinkPort extends MAVLinkPort {
         this.debug = debug;
     }
 
-    public void open(SocketAddress bindAddress, SocketAddress peerAddress) throws IOException {
+    public void setup(int bindPort, int peerPort, boolean client) {
+        this.bindPort = new InetSocketAddress("127.0.0.1", bindPort);
+        this.peerPort = new InetSocketAddress("127.0.0.1", peerPort);
+        this.isClient = client;
+    }
+
+    public void open() throws IOException {
         channel = DatagramChannel.open();
-        channel.socket().bind(bindAddress);
         channel.configureBlocking(false);
-        channel.connect(peerAddress);
+        channel.socket().bind(bindPort);
+        channel.connect(peerPort);
         stream = new MAVLinkStream(schema, channel);
-        stream.setDebug(debug);
+        if (isClient) {
+            // Client initiates communication.
+            MAVLinkMessage dummy = new MAVLinkMessage(schema, 0, 1, 51);
+            System.out.println("Sending dummy message");
+            stream.write(dummy);
+        }
     }
 
     @Override

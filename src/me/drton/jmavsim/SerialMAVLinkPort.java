@@ -20,16 +20,31 @@ public class SerialMAVLinkPort extends MAVLinkPort {
     private MAVLinkStream stream;
     private boolean debug = false;
 
+    // connection information
+    String portName;
+    int baudRate;
+    int dataBits;
+    int stopBits;
+    int parity;
+
     public SerialMAVLinkPort(MAVLinkSchema schema) {
         super(schema);
         this.schema = schema;
+    }
+
+    public void setup(String portName, int baudRate, int dataBits, int stopBits, int parity) {
+        this.portName = portName;
+        this.baudRate = baudRate;
+        this.dataBits = dataBits;
+        this.stopBits = stopBits;
+        this.parity = parity;
     }
 
     public void setDebug(boolean debug) {
         this.debug = debug;
     }
 
-    public void open(String portName, int baudRate, int dataBits, int stopBits, int parity) throws IOException {
+    public void open() throws IOException {
         serialPort = new SerialPort(portName);
         try {
             serialPort.openPort();

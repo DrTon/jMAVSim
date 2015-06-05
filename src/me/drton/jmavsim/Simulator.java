@@ -10,12 +10,23 @@ import javax.vecmath.Matrix3d;
 import javax.vecmath.Vector3d;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 
 /**
  * User: ton Date: 26.11.13 Time: 12:33
  */
 public class Simulator {
+
+    public static boolean USE_SERIAL_PORT = false;
+    public static final int DEFAULT_AUTOPILOT_PORT = 14550;
+    public static final int DEFAULT_QGC_PORT = 14555;
+    public static final String DEFAULT_SERIAL_PATH = "/dev/tty.usbmodem1";
+    public static final int DEFAULT_SERIAL_BAUD_RATE = 230400;
+
+    private static int autopilotPort = DEFAULT_AUTOPILOT_PORT;
+    private static int qgcPort = DEFAULT_QGC_PORT;
+    private static String serialPath = DEFAULT_SERIAL_PATH;
+    private static int serialBaudRate = DEFAULT_SERIAL_BAUD_RATE;
+
     private World world;
     private int sleepInterval = 5;  // Main loop interval, in ms
 
@@ -38,13 +49,25 @@ public class Simulator {
         world.addObject(connCommon);
 
         // Create ports
-        // Serial port: connection to autopilot
-        SerialMAVLinkPort serialMAVLinkPort = new SerialMAVLinkPort(schema);
-        connCommon.addNode(serialMAVLinkPort);
-        connHIL.addNode(serialMAVLinkPort);
+        MAVLinkPort autopilotMavLinkPort;
+        if (USE_SERIAL_PORT) {
+            //Serial port: connection to autopilot over serial.
+            SerialMAVLinkPort port = new SerialMAVLinkPort(schema);
+            port.setup(serialPath, serialBaudRate, 8, 1, 0);
+            autopilotMavLinkPort = port;
+        } else {
+            UDPMavLinkPort port = new UDPMavLinkPort(schema);
+            port.setup(0, autopilotPort, true); // default source port 0 for autopilot, which is a client of JMAVSim
+            autopilotMavLinkPort = port;
+        }
+
+        // allow HIL and GCS to talk to this port
+        connHIL.addNode(autopilotMavLinkPort);
+        connCommon.addNode(autopilotMavLinkPort);
         // UDP port: connection to ground station
-        UDPMavLinkPort udpMavLinkPort = new UDPMavLinkPort(schema);
-        connCommon.addNode(udpMavLinkPort);
+        UDPMavLinkPort udpGCMavLinkPort = new UDPMavLinkPort(schema);
+        udpGCMavLinkPort.setup(qgcPort, autopilotPort, false);
+        connCommon.addNode(udpGCMavLinkPort);
 
         // Create environment
         SimpleEnvironment simpleEnvironment = new SimpleEnvironment(world);
@@ -106,10 +129,11 @@ public class Simulator {
 
         // Open ports
         //serialMAVLinkPort.setDebug(true);
-        serialMAVLinkPort.open("/dev/tty.usbmodem1", 230400, 8, 1, 0);
-        serialMAVLinkPort.sendRaw("\nsh /etc/init.d/rc.usb\n".getBytes());
+        autopilotMavLinkPort.open();
+        //serialMAVLinkPort.sendRaw("\nsh /etc/init.d/rc.usb\n".getBytes());
         //udpMavLinkPort.setDebug(true);
-        udpMavLinkPort.open(new InetSocketAddress(14555), new InetSocketAddress(14550));
+        udpGCMavLinkPort.open();
+        //udpMavLinkPort.open(new InetSocketAddress(14555), new InetSocketAddress(14550));
 
         // Run
         try {
@@ -119,8 +143,8 @@ public class Simulator {
         }
 
         // Close ports
-        serialMAVLinkPort.close();
-        udpMavLinkPort.close();
+        autopilotMavLinkPort.close();
+        udpGCMavLinkPort.close();
     }
 
     public void run() throws IOException, InterruptedException {
@@ -136,6 +160,47 @@ public class Simulator {
 
     public static void main(String[] args)
             throws InterruptedException, IOException, ParserConfigurationException, SAXException {
+
+        String usageString = "java -cp lib/*:out/production/jmavsim.jar me.drton.jmavsim.Simulator " +
+                "[-udp <autopilot port> <qgc port> | -serial <path> <baudRate>]";
+        // default is to use UDP.
+        if (args.length == 0) {
+            USE_SERIAL_PORT = false;
+        }
+        if (args.length > 0 && args.length < 3 || args.length > 3) {
+            System.err.println("Incorrect number of arguments. \n Usage: " + usageString);
+            return;
+        }
+
+        int i = 0;
+        while (i < args.length) {
+            String arg = args[i++];
+            if (arg.equalsIgnoreCase("-udp")) {
+                USE_SERIAL_PORT = false;
+                try {
+                    autopilotPort = Integer.parseInt(args[i++]);
+                    qgcPort = Integer.parseInt(args[i++]);
+                } catch (NumberFormatException e) {
+                    System.out.println("Expected: " + usageString + ", got: " + e.toString());
+                    return;
+                }
+            } else if (arg.equals("-serial")) {
+                USE_SERIAL_PORT = true;
+                try {
+                    serialPath = args[i++];
+                    serialBaudRate = Integer.parseInt(args[i++]);
+                } catch (NumberFormatException e) {
+                    System.out.println("Expected: " + usageString + ", got: " + e.toString());
+                    return;
+                }
+            }
+         }
+
+        if (i != args.length) {
+            System.err.println("Usage: " + usageString);
+            return;
+        } else { System.out.println("Success!"); }
+
         new Simulator();
     }
 }
