@@ -21,7 +21,6 @@ public class UDPMavLinkPort extends MAVLinkPort {
     private SocketAddress bindPort;
     private SocketAddress peerPort;
     private int portAddress;
-    private boolean isClient;
     private MAVLinkStream stream;
     private boolean debug = false;
 
@@ -35,24 +34,17 @@ public class UDPMavLinkPort extends MAVLinkPort {
         this.debug = debug;
     }
 
-    public void setup(int bindPort, int peerPort, boolean client) {
+    public void setup(int bindPort, int peerPort) {
         this.bindPort = new InetSocketAddress("127.0.0.1", bindPort);
         this.peerPort = new InetSocketAddress("127.0.0.1", peerPort);
-        this.isClient = client;
     }
 
     public void open() throws IOException {
         channel = DatagramChannel.open();
-        channel.configureBlocking(false);
         channel.socket().bind(bindPort);
+        channel.configureBlocking(false);
         channel.connect(peerPort);
         stream = new MAVLinkStream(schema, channel);
-        if (isClient) {
-            // Client initiates communication.
-            MAVLinkMessage dummy = new MAVLinkMessage(schema, 0, 1, 51);
-            System.out.println("Sending dummy message");
-            stream.write(dummy);
-        }
     }
 
     @Override
@@ -86,6 +78,7 @@ public class UDPMavLinkPort extends MAVLinkPort {
                 if (msg == null) {
                     break;
                 }
+                System.out.println("msg.name: " + msg.getMsgName() + ", type: " + msg.getMsgType());
                 sendMessage(msg);
             } catch (IOException e) {
                 // Silently ignore this exception, we likely just have nobody on this port yet/already

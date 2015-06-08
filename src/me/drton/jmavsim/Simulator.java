@@ -57,7 +57,7 @@ public class Simulator {
             autopilotMavLinkPort = port;
         } else {
             UDPMavLinkPort port = new UDPMavLinkPort(schema);
-            port.setup(0, autopilotPort, true); // default source port 0 for autopilot, which is a client of JMAVSim
+            port.setup(0, autopilotPort); // default source port 0 for autopilot, which is a client of JMAVSim
             autopilotMavLinkPort = port;
         }
 
@@ -66,7 +66,7 @@ public class Simulator {
         connCommon.addNode(autopilotMavLinkPort);
         // UDP port: connection to ground station
         UDPMavLinkPort udpGCMavLinkPort = new UDPMavLinkPort(schema);
-        udpGCMavLinkPort.setup(qgcPort, autopilotPort, false);
+        udpGCMavLinkPort.setup(qgcPort, autopilotPort);
         connCommon.addNode(udpGCMavLinkPort);
 
         // Create environment
@@ -162,12 +162,12 @@ public class Simulator {
             throws InterruptedException, IOException, ParserConfigurationException, SAXException {
 
         String usageString = "java -cp lib/*:out/production/jmavsim.jar me.drton.jmavsim.Simulator " +
-                "[-udp <autopilot port> <qgc port> | -serial <path> <baudRate>]";
+                "[-udp <autopilot port (optional)> <qgc port (optional) > | -serial <path (optional)> <baudRate (optional)>]";
         // default is to use UDP.
         if (args.length == 0) {
             USE_SERIAL_PORT = false;
         }
-        if (args.length > 0 && args.length < 3 || args.length > 3) {
+        if (args.length == 2 || args.length > 3) {
             System.err.println("Incorrect number of arguments. \n Usage: " + usageString);
             return;
         }
@@ -177,7 +177,12 @@ public class Simulator {
             String arg = args[i++];
             if (arg.equalsIgnoreCase("-udp")) {
                 USE_SERIAL_PORT = false;
+                if (args.length == 1) {
+                    // only arg is -udp, so use default port values.
+                    break;
+                }
                 try {
+                    // try to parse passed-in ports.
                     autopilotPort = Integer.parseInt(args[i++]);
                     qgcPort = Integer.parseInt(args[i++]);
                 } catch (NumberFormatException e) {
@@ -186,6 +191,10 @@ public class Simulator {
                 }
             } else if (arg.equals("-serial")) {
                 USE_SERIAL_PORT = true;
+                if (args.length == 1) {
+                    // only arg is -serial, so use default values
+                    break;
+                }
                 try {
                     serialPath = args[i++];
                     serialBaudRate = Integer.parseInt(args[i++]);
@@ -193,6 +202,8 @@ public class Simulator {
                     System.out.println("Expected: " + usageString + ", got: " + e.toString());
                     return;
                 }
+            } else {
+                System.err.println("Unknown flag: " + arg + ", usage: " + usageString);
             }
          }
 
