@@ -5,8 +5,10 @@ import me.drton.jmavlib.mavlink.MAVLinkStream;
 import me.drton.jmavlib.mavlink.MAVLinkMessage;
 
 import java.io.IOException;
+import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 
@@ -34,9 +36,11 @@ public class UDPMavLinkPort extends MAVLinkPort {
         this.debug = debug;
     }
 
-    public void setup(int bindPort, int peerPort) {
-        this.bindPort = new InetSocketAddress("127.0.0.1", bindPort);
-        this.peerPort = new InetSocketAddress("127.0.0.1", peerPort);
+    public void setup(int bindPort, String peerAddress, int peerPort) {
+        this.bindPort = new InetSocketAddress(Simulator.LOCAL_HOST, bindPort);
+        //this.peerPort = new InetSocketAddress("129.46.67.209", peerPort);
+        //this.bindPort = new InetSocketAddress("127.0.0.1", bindPort);
+        this.peerPort = new InetSocketAddress(peerAddress, peerPort);
     }
 
     public void open() throws IOException {

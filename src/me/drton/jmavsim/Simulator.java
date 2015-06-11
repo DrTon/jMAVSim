@@ -10,6 +10,8 @@ import javax.vecmath.Matrix3d;
 import javax.vecmath.Vector3d;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.Arrays;
 
 /**
  * User: ton Date: 26.11.13 Time: 12:33
@@ -17,11 +19,14 @@ import java.io.IOException;
 public class Simulator {
 
     public static boolean USE_SERIAL_PORT = false;
+    public static boolean COMMUNICATE_WITH_QGC = true;
     public static final int DEFAULT_AUTOPILOT_PORT = 14550;
     public static final int DEFAULT_QGC_PORT = 14555;
     public static final String DEFAULT_SERIAL_PATH = "/dev/tty.usbmodem1";
     public static final int DEFAULT_SERIAL_BAUD_RATE = 230400;
+    public static final String LOCAL_HOST = "127.0.0.1";
 
+    private static String autopilotIpAddress = LOCAL_HOST;
     private static int autopilotPort = DEFAULT_AUTOPILOT_PORT;
     private static int qgcPort = DEFAULT_QGC_PORT;
     private static String serialPath = DEFAULT_SERIAL_PATH;
@@ -57,7 +62,7 @@ public class Simulator {
             autopilotMavLinkPort = port;
         } else {
             UDPMavLinkPort port = new UDPMavLinkPort(schema);
-            port.setup(0, autopilotPort); // default source port 0 for autopilot, which is a client of JMAVSim
+            port.setup(0, autopilotIpAddress, autopilotPort); // default source port 0 for autopilot, which is a client of JMAVSim
             autopilotMavLinkPort = port;
         }
 
@@ -66,8 +71,10 @@ public class Simulator {
         connCommon.addNode(autopilotMavLinkPort);
         // UDP port: connection to ground station
         UDPMavLinkPort udpGCMavLinkPort = new UDPMavLinkPort(schema);
-        udpGCMavLinkPort.setup(qgcPort, autopilotPort);
-        connCommon.addNode(udpGCMavLinkPort);
+        if (COMMUNICATE_WITH_QGC) {
+            udpGCMavLinkPort.setup(qgcPort, LOCAL_HOST, autopilotPort);
+            connCommon.addNode(udpGCMavLinkPort);
+        }
 
         // Create environment
         SimpleEnvironment simpleEnvironment = new SimpleEnvironment(world);
@@ -130,10 +137,10 @@ public class Simulator {
         // Open ports
         //serialMAVLinkPort.setDebug(true);
         autopilotMavLinkPort.open();
-        //serialMAVLinkPort.sendRaw("\nsh /etc/init.d/rc.usb\n".getBytes());
         //udpMavLinkPort.setDebug(true);
-        udpGCMavLinkPort.open();
-        //udpMavLinkPort.open(new InetSocketAddress(14555), new InetSocketAddress(14550));
+        if (COMMUNICATE_WITH_QGC) {
+            udpGCMavLinkPort.open();
+        }
 
         // Run
         try {
@@ -161,13 +168,16 @@ public class Simulator {
     public static void main(String[] args)
             throws InterruptedException, IOException, ParserConfigurationException, SAXException {
 
+        String udpString = "-udp <autopilot ip address>:<autopilot port>";
+        String qgcString = " -qgc <qgc port>";
+        String serialString = "-serial <path> <baudRate>";
         String usageString = "java -cp lib/*:out/production/jmavsim.jar me.drton.jmavsim.Simulator " +
-                "[-udp <autopilot port (optional)> <qgc port (optional) > | -serial <path (optional)> <baudRate (optional)>]";
+                "[" + udpString + " | " + serialString + "] "+ qgcString;
         // default is to use UDP.
         if (args.length == 0) {
             USE_SERIAL_PORT = false;
         }
-        if (args.length == 2 || args.length > 3) {
+        if (args.length > 7) {
             System.err.println("Incorrect number of arguments. \n Usage: " + usageString);
             return;
         }
@@ -175,18 +185,39 @@ public class Simulator {
         int i = 0;
         while (i < args.length) {
             String arg = args[i++];
+            if (arg.equalsIgnoreCase("--help")) {
+                System.out.println("Usage: " + usageString);
+                System.out.println("\n Note: if <qgc <port> is set to -1, JMavSim won't generate Mavlink messages for GroundControl.");
+                return;
+            }
             if (arg.equalsIgnoreCase("-udp")) {
                 USE_SERIAL_PORT = false;
                 if (args.length == 1) {
-                    // only arg is -udp, so use default port values.
+                    // only arg is -udp, so use default values.
                     break;
                 }
-                try {
-                    // try to parse passed-in ports.
-                    autopilotPort = Integer.parseInt(args[i++]);
-                    qgcPort = Integer.parseInt(args[i++]);
-                } catch (NumberFormatException e) {
-                    System.out.println("Expected: " + usageString + ", got: " + e.toString());
+                if (i < args.length) {
+                    String nextArg = args[i++];
+                    if (nextArg.startsWith("-")) {
+                        // only turning on udp, but want to use default ports
+                        i--;
+                        continue;
+                    }
+                    try {
+                        // try to parse passed-in ports.
+                        String[] list = nextArg.split(":");
+                        if (list.length != 2) {
+                            System.err.println("Expected: " + udpString + ", got: " + Arrays.toString(list));
+                            return;
+                        }
+                        autopilotIpAddress = list[0];
+                        autopilotPort = Integer.parseInt(list[1]);
+                    } catch (NumberFormatException e) {
+                        System.err.println("Expected: " + usageString + ", got: " + e.toString());
+                        return;
+                    }
+                } else {
+                    System.err.println("-udp needs an argument: " + udpString);
                     return;
                 }
             } else if (arg.equals("-serial")) {
@@ -195,15 +226,42 @@ public class Simulator {
                     // only arg is -serial, so use default values
                     break;
                 }
-                try {
-                    serialPath = args[i++];
-                    serialBaudRate = Integer.parseInt(args[i++]);
-                } catch (NumberFormatException e) {
-                    System.out.println("Expected: " + usageString + ", got: " + e.toString());
+                if ( (i+2) <= args.length) {
+                    try {
+                        serialPath = args[i++];
+                        serialBaudRate = Integer.parseInt(args[i++]);
+                    } catch (NumberFormatException e) {
+                        System.err.println("Expected: " + usageString + ", got: " + e.toString());
+                        return;
+                    }
+                } else {
+                    System.err.println("-serial needs two arguments. Expected: " + serialString + ", got: " + Arrays.toString(args));
+                    return;
+                }
+            } else if (arg.equals("-qgc")) {
+                if (i < args.length) {
+                    try {
+                        qgcPort = Integer.parseInt(args[i++]);
+                        if (qgcPort < 0) {
+                            COMMUNICATE_WITH_QGC = false;
+                        } else {
+                            COMMUNICATE_WITH_QGC = true;
+                        }
+                        if (args.length == 1) {
+                            // only arg is -qgc, so use default values
+                            break;
+                        }
+                    } catch (NumberFormatException e) {
+                        System.err.println("Expected: " + usageString + ", got: " + e.toString());
+                        return;
+                    }
+                } else {
+                    System.err.println("-qgc needs an argument: " + qgcString);
                     return;
                 }
             } else {
                 System.err.println("Unknown flag: " + arg + ", usage: " + usageString);
+                return;
             }
          }
 
