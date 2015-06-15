@@ -38,7 +38,7 @@ public class MAVLinkTargetSystem extends MAVLinkSystem {
         if (t - msgLastPosition > msgIntervalPosition) {
             msgLastPosition = t;
             MAVLinkMessage msg_target = new MAVLinkMessage(schema, "GLOBAL_POSITION_INT", sysId, componentId);
-            GPSPosition p = target.getGlobalPosition();
+            GNSSReport p = target.getGlobalPosition();
             msg_target.set("time_boot_ms", t * 1000);
             msg_target.set("lat", (long) (p.position.lat * 1e7));
             msg_target.set("lon", (long) (p.position.lon * 1e7));

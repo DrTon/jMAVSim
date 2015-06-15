@@ -21,7 +21,6 @@
             <classpath refid="libsclasspath"/>
             <src path="src"/>
             <src path="jMAVlib/src"/>
-            <src path="la4j/src/main/java"/>
         </javac>
     </target>
 

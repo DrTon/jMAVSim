@@ -11,11 +11,9 @@ import java.util.List;
 
 /**
  * MAVLinkHILSystem is MAVLink bridge between AbstractVehicle and autopilot connected via MAVLink.
- * <p/>
- * User: ton Date: 13.02.14 Time: 22:04
+ * MAVLinkHILSystem should have the same sysID as the autopilot, but different componentId.
  */
 public class MAVLinkHILSystem extends MAVLinkSystem {
-    // MAVLinkHILSystem has the same sysID as autopilot, but different componentId
     private AbstractVehicle vehicle;
     private boolean gotHeartBeat = false;
     private boolean inited = false;
@@ -23,12 +21,12 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
     private long initDelay = 1000;
 
     /**
-     * Create MAVLinkHILSimulator, MAVLink system thet sends simulated sensors to autopilot and passes controls from
+     * Create MAVLinkHILSimulator, MAVLink system that sends simulated sensors to autopilot and passes controls from
      * autopilot to simulator
      *
      * @param sysId       SysId of simulator should be the same as autopilot
      * @param componentId ComponentId of simulator should be different from autopilot
-     * @param vehicle
+     * @param vehicle     vehicle to connect
      */
     public MAVLinkHILSystem(MAVLinkSchema schema, int sysId, int componentId, AbstractVehicle vehicle) {
         super(schema, sysId, componentId);
@@ -64,9 +62,11 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
 
     @Override
     public void update(long t) {
-        // Don't call super.update(), because heartbeats already sent by autopilot
-        long tu = t * 1000;
+        super.update(t);
+        long tu = t * 1000; // Time in us
+
         Sensors sensors = vehicle.getSensors();
+
         // Sensors
         MAVLinkMessage msg_sensor = new MAVLinkMessage(schema, "HIL_SENSOR", sysId, componentId);
         msg_sensor.set("time_usec", tu);
@@ -84,9 +84,10 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
         msg_sensor.set("zmag", mag.z);
         msg_sensor.set("pressure_alt", sensors.getPressureAlt());
         sendMessage(msg_sensor);
+
         // GPS
         if (sensors.isGPSUpdated()) {
-            GPSPosition gps = sensors.getGPS();
+            GNSSReport gps = sensors.getGNSS();
             if (gps != null && gps.position != null && gps.velocity != null) {
                 MAVLinkMessage msg_gps = new MAVLinkMessage(schema, "HIL_GPS", sysId, componentId);
                 msg_gps.set("time_usec", tu);
