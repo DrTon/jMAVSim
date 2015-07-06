@@ -92,12 +92,26 @@ public class RC2SerialInput extends MAVLinkNode {
                             }
                             System.out.println();
                         }
+                        int buttons = 0;
+                        for (int i = 0; i < 12; i++) {
+                            int sw = 0;
+                            double v = values[i + 4];
+                            if (v > 1700.0) {
+                                sw = 1; // ON
+                            } else if (v > 1300) {
+                                sw = 2; // MIDDLE
+                            } else if (v > 500) {
+                                sw = 3; // OFF
+                            }
+                            buttons |= (sw << (i * 2));
+                        }
                         MAVLinkMessage msg = new MAVLinkMessage(schema, "MANUAL_CONTROL", sysId, componentId);
                         msg.set("target", 0);
                         msg.set("x", scaleRC(values[1]));
                         msg.set("y", scaleRC(values[0]));
                         msg.set("z", scaleRC(values[3]));
                         msg.set("r", scaleRC(values[2]));
+                        msg.set("buttons", buttons);
                         if (debug) {
                             System.out.println(msg);
                         }

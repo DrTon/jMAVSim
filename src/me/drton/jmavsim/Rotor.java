@@ -1,10 +1,11 @@
 package me.drton.jmavsim;
 
 /**
- * User: ton Date: 15.12.13 Time: 21:16
+ * Simple rotor model. Thrust and torque are proportional to control signal filtered with simple LPF (RC filter), to
+ * simulate spin up/slow down.
  */
 public class Rotor {
-    private double rc = 1.0;
+    private double tau = 1.0;
     private double fullThrust = 1.0;
     private double fullTorque = 1.0;
     private double w = 0.0;
@@ -14,31 +15,53 @@ public class Rotor {
     public void update(long t) {
         if (lastTime >= 0) {
             double dt = (t - lastTime) / 1000.0;
-            w += (control - w) * (1.0 - Math.exp(-dt * rc));
+            w += (control - w) * (1.0 - Math.exp(-dt / tau));
         }
         lastTime = t;
     }
 
+    /**
+     * Set control signal
+     * @param control control signal normalized to [0...1] for traditional or [-1...1] for reversable rotors
+     */
     public void setControl(double control) {
         this.control = control;
     }
 
+    /**
+     * Set full thrust
+     * @param fullThrust [N]
+     */
     public void setFullThrust(double fullThrust) {
         this.fullThrust = fullThrust;
     }
 
+    /**
+     * Set torque at full thrust
+     * @param fullTorque [N * m]
+     */
     public void setFullTorque(double fullTorque) {
         this.fullTorque = fullTorque;
     }
 
+    /**
+     * Set time constant (spin-up time).
+     * @param timeConstant [s]
+     */
     public void setTimeConstant(double timeConstant) {
-        this.rc = 1.0 / timeConstant / 2.0 / Math.PI;
+        this.tau = timeConstant;
     }
 
+    /**
+     * Get current rotor thrust, [N]
+     */
     public double getThrust() {
         return w * fullThrust;
     }
 
+    /**
+     * Get current rotor torque [N * m]
+     */
     public double getTorque() {
         return control * fullTorque;
     }
