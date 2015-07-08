@@ -101,7 +101,7 @@ public class Simulator {
 
         // Open ports
         silPort.open(new InetSocketAddress("127.0.0.1", 14560), new InetSocketAddress("127.0.0.1", 14565));
-        rcInputPort.open("/dev/tty.usbmodem1421", 115200, 8, 1, 0);
+        rcInputPort.open("/dev/tty.usbmodem14141", 115200, 8, 1, 0);
 
         // Run
         try {
