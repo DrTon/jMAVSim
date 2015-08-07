@@ -18,6 +18,7 @@ public class SimpleSensors implements Sensors {
     private long gpsLast = 0;
     private GNSSReport gps = new GNSSReport();
     private boolean gpsUpdated = false;
+    private double pressureAltOffset = 0.0;
 
     @Override
     public void setObject(DynamicObject object) {
@@ -37,6 +38,9 @@ public class SimpleSensors implements Sensors {
         this.gpsInterval = gpsInterval;
     }
 
+    public void setPressureAltOffset(double pressureAltOffset) {
+        this.pressureAltOffset = pressureAltOffset;
+    }
 
     @Override
     public Vector3d getAcc() {
@@ -64,7 +68,7 @@ public class SimpleSensors implements Sensors {
 
     @Override
     public double getPressureAlt() {
-        return -object.getPosition().z;
+        return -object.getPosition().z + pressureAltOffset;
     }
 
     @Override
@@ -90,7 +94,7 @@ public class SimpleSensors implements Sensors {
             gpsCurrent.position = globalProjector.reproject(new double[]{pos.x, pos.y, pos.z});
             gpsCurrent.eph = 1.0;
             gpsCurrent.epv = 1.0;
-            gpsCurrent.velocity = object.getVelocity();
+            gpsCurrent.velocity = new Vector3d(object.getVelocity());
             gpsCurrent.fix = 3;
             gpsCurrent.time = System.currentTimeMillis() * 1000;
             gps = gpsDelayLine.getOutput(t, gpsCurrent);
