@@ -36,27 +36,29 @@ public class MAVLinkHILSystem extends MAVLinkSystem {
     @Override
     public void handleMessage(MAVLinkMessage msg) {
         super.handleMessage(msg);
-        long t = System.currentTimeMillis();
-        if ("HIL_CONTROLS".equals(msg.getMsgName())) {
-            List<Double> control = Arrays.asList(msg.getDouble("roll_ailerons"), msg.getDouble("pitch_elevator"),
-                    msg.getDouble("yaw_rudder"), msg.getDouble("throttle"), msg.getDouble("aux1"),
-                    msg.getDouble("aux2"), msg.getDouble("aux3"), msg.getDouble("aux4"));
-            vehicle.setControl(control);
-        } else if ("HEARTBEAT".equals(msg.getMsgName())) {
-            if (!gotHeartBeat && sysId == msg.getInt(sysId)) {
-                gotHeartBeat = true;
-                initTime = t + initDelay;
+        if (msg.systemID == sysId) {
+            long t = System.currentTimeMillis();
+            if ("HIL_CONTROLS".equals(msg.getMsgName())) {
+                List<Double> control = Arrays.asList(msg.getDouble("roll_ailerons"), msg.getDouble("pitch_elevator"),
+                        msg.getDouble("yaw_rudder"), msg.getDouble("throttle"), msg.getDouble("aux1"),
+                        msg.getDouble("aux2"), msg.getDouble("aux3"), msg.getDouble("aux4"));
+                vehicle.setControl(control);
+            } else if ("HEARTBEAT".equals(msg.getMsgName())) {
+                if (!gotHeartBeat && sysId == msg.getInt(sysId)) {
+                    gotHeartBeat = true;
+                    initTime = t + initDelay;
+                }
+                if (!inited && t > initTime) {
+                    System.out.println("Init MAVLink");
+                    initMavLink();
+                    inited = true;
+                }
+                if ((msg.getInt("base_mode") & 128) == 0) {
+                    vehicle.setControl(Collections.<Double>emptyList());
+                }
+            } else if ("STATUSTEXT".equals(msg.getMsgName())) {
+                System.out.println("MSG: " + msg.getString("text"));
             }
-            if (!inited && t > initTime) {
-                System.out.println("Init MAVLink");
-                initMavLink();
-                inited = true;
-            }
-            if ((msg.getInt("base_mode") & 128) == 0) {
-                vehicle.setControl(Collections.<Double>emptyList());
-            }
-        } else if ("STATUSTEXT".equals(msg.getMsgName())) {
-            System.out.println("MSG: " + msg.getString("text"));
         }
     }
 
