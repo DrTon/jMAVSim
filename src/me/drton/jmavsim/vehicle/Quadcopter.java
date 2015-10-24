@@ -31,8 +31,8 @@ public class Quadcopter extends AbstractMulticopter {
                       double rotorTorque, double rotorTimeConst, Vector3d rotorsOffset) throws FileNotFoundException {
         super(world, modelName);
         rotorPositions[0] = new Vector3d(0.0, armLength, 0.0);
-        rotorPositions[1] = new Vector3d(0.0, -armLength, 0.0);
-        rotorPositions[2] = new Vector3d(armLength, 0.0, 0.0);
+        rotorPositions[1] = new Vector3d(armLength, 0.0, 0.0);
+        rotorPositions[2] = new Vector3d(0.0, -armLength, 0.0);
         rotorPositions[3] = new Vector3d(-armLength, 0.0, 0.0);
         if (orientation.equals("x") || orientation.equals("X")) {
             Matrix3d r = new Matrix3d();
@@ -48,7 +48,7 @@ public class Quadcopter extends AbstractMulticopter {
             rotorPositions[i].add(rotorsOffset);
             Rotor rotor = rotors[i];
             rotor.setFullThrust(rotorThrust);
-            rotor.setFullTorque(i < 2 ? -rotorTorque : rotorTorque);
+            rotor.setFullTorque((i % 2 == 0) ? -rotorTorque : rotorTorque);
             rotor.setTimeConstant(rotorTimeConst);
         }
     }
