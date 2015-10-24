@@ -109,8 +109,8 @@ public class RC2SerialInput extends MAVLinkNode {
                         msg.set("target", 0);
                         msg.set("x", scaleRC(values[1]));
                         msg.set("y", scaleRC(values[0]));
-                        msg.set("z", scaleRC(values[3]));
-                        msg.set("r", scaleRC(values[2]));
+                        msg.set("z", scaleRC(values[2]));
+                        msg.set("r", scaleRC(values[3]));
                         msg.set("buttons", buttons);
                         if (debug) {
                             System.out.println(msg);

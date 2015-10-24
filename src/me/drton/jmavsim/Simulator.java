@@ -36,9 +36,8 @@ public class Simulator {
         // UDP port: connection to autopilot
         UDPMavLinkPort silPort = new UDPMavLinkPort(schema);
         connSIL.addNode(silPort);
-        // Serial RC input port
-        RC2SerialInput rcInputPort = new RC2SerialInput(schema, 1, 51);
-        rcInputPort.setRCCalibration(1100.0, 1518.0, 1936.0);
+        // RC MAVLink input port
+        SerialMAVLinkPort rcInputPort = new SerialMAVLinkPort(schema);
         connSIL.addNode(rcInputPort);
 
         // Create environment
@@ -65,7 +64,7 @@ public class Simulator {
         vehicle.setMomentOfInertia(I);
         SimpleSensors sensors = new SimpleSensors();
         sensors.setGPSDelay(200);
-        sensors.setGPSStartTime(System.currentTimeMillis() + 20000);
+        sensors.setGPSStartTime(System.currentTimeMillis() + 2000);
         vehicle.setSensors(sensors);
         vehicle.setDragMove(0.02);
         //v.setDragRotate(0.1);
@@ -101,7 +100,7 @@ public class Simulator {
 
         // Open ports
         silPort.open(new InetSocketAddress("127.0.0.1", 14560), new InetSocketAddress("127.0.0.1", 14565));
-        rcInputPort.open("/dev/tty.usbmodem14141", 115200, 8, 1, 0);
+        rcInputPort.open("/dev/tty.usbmodem1", 115200, 8, 1, 0);
 
         // Run
         try {
