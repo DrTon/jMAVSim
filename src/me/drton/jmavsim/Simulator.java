@@ -29,16 +29,23 @@ public class Simulator {
         MAVLinkSchema schema = new MAVLinkSchema("mavlink/message_definitions/common.xml");
 
         // Create MAVLink connections
-        MAVLinkConnection connSIL = new MAVLinkConnection(world);
-        world.addObject(connSIL);
+        MAVLinkConnection connHIL = new MAVLinkConnection(world);
+        world.addObject(connHIL);
+        MAVLinkConnection connCommon = new MAVLinkConnection(world);
+        // Don't spam ground station with HIL messages
+        connCommon.addSkipMessage(schema.getMessageDefinition("HIL_CONTROLS").id);
+        connCommon.addSkipMessage(schema.getMessageDefinition("HIL_SENSOR").id);
+        connCommon.addSkipMessage(schema.getMessageDefinition("HIL_GPS").id);
+        world.addObject(connCommon);
 
         // Create ports
-        // UDP port: connection to autopilot
-        UDPMavLinkPort silPort = new UDPMavLinkPort(schema);
-        connSIL.addNode(silPort);
-        // RC MAVLink input port
-        SerialMAVLinkPort rcInputPort = new SerialMAVLinkPort(schema);
-        connSIL.addNode(rcInputPort);
+        // Serial port: connection to autopilot
+        SerialMAVLinkPort serialMAVLinkPort = new SerialMAVLinkPort(schema);
+        connCommon.addNode(serialMAVLinkPort);
+        connHIL.addNode(serialMAVLinkPort);
+        // UDP port: connection to ground station
+        UDPMavLinkPort udpMavLinkPort = new UDPMavLinkPort(schema);
+        connCommon.addNode(udpMavLinkPort);
 
         // Create environment
         SimpleEnvironment simpleEnvironment = new SimpleEnvironment(world);
@@ -72,7 +79,7 @@ public class Simulator {
         // Create MAVLink HIL system
         // SysId should be the same as autopilot, ComponentId should be different!
         MAVLinkHILSystem hilSystem = new MAVLinkHILSystem(schema, 1, 51, vehicle);
-        connSIL.addNode(hilSystem);
+        connHIL.addNode(hilSystem);
         world.addObject(vehicle);
 
         // Create 3D visualizer
@@ -99,8 +106,11 @@ public class Simulator {
         */
 
         // Open ports
-        silPort.open(new InetSocketAddress("127.0.0.1", 14560), new InetSocketAddress("127.0.0.1", 14565));
-        rcInputPort.open("/dev/tty.usbmodem1", 115200, 8, 1, 0);
+        //serialMAVLinkPort.setDebug(true);
+        serialMAVLinkPort.open("/dev/tty.usbmodem1", 230400, 8, 1, 0);
+        serialMAVLinkPort.sendRaw("\nsh /etc/init.d/rc.usb\n".getBytes());
+        //udpMavLinkPort.setDebug(true);
+        udpMavLinkPort.open(new InetSocketAddress("127.0.0.1", 14555), new InetSocketAddress("127.0.0.1", 14550));
 
         // Run
         try {
@@ -110,8 +120,8 @@ public class Simulator {
         }
 
         // Close ports
-        silPort.close();
-        rcInputPort.close();
+        serialMAVLinkPort.close();
+        udpMavLinkPort.close();
     }
 
     public void run() throws IOException, InterruptedException {
