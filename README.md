@@ -1,6 +1,10 @@
 jMAVSim
 =======
 
+PROJECT DISCONTINUED
+====================
+Feel free to contact me and I can transfer this project or put link to some good active fork.
+
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/DrTon/jMAVSim?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Simple multirotor simulator with MAVLink protocol support
